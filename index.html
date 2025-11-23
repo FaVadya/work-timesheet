@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Рабочий табель</title>
+    
+    <!-- Эти теги делают приложение "приложением" -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Рабочий табель">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#3498db">
+    
+    <!-- Иконка для iPhone -->
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    
+    <!-- Файл настроек приложения -->
+    <link rel="manifest" href="manifest.json">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* ВСТАВЬ СЮДА ВЕСЬ ТВОЙ CSS КОД КОТОРЫЙ БЫЛ РАНЕЕ */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        :root {
+            --primary: #3498db;
+            /* ... и все остальные переменные ... */
+        }
+        
+        /* ... ВСТАВЬ ВЕСЬ ОСТАЛЬНОЙ CSS ... */
+        
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- ВСТАВЬ СЮДА ВЕСЬ ТВОЙ HTML КОД КОТОРЫЙ БЫЛ РАНЕЕ -->
+        <div class="header">
+            <h1>Рабочий табель</h1>
+            <button class="theme-toggle" id="themeToggle">
+                <i class="fas fa-moon"></i>
+            </button>
+        </div>
+        
+        <div class="tabs">
+            <!-- ... и так далее весь твой HTML ... -->
+        </div>
+        
+        <!-- ... ВСТАВЬ ВЕСЬ ОСТАЛЬНОЙ HTML ... -->
+    </div>
+    
+    <!-- Модальные окна -->
+    <div class="modal" id="dateModal">
+        <!-- ... -->
+    </div>
+    
+    <!-- Уведомления -->
+    <div class="notification" id="notification"></div>
+
+    <!-- Нижнее меню -->
+    <div class="mobile-bottom-nav">
+        <!-- ... -->
+    </div>
+
+    <script>
+        // Service Worker регистрация - ДОБАВЬ ЭТО В НАЧАЛО СКРИПТА
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(function(registration) {
+                        console.log('Приложение готово к работе офлайн!');
+                    })
+                    .catch(function(error) {
+                        console.log('Офлайн режим не доступен: ', error);
+                    });
+            });
+        }
+        
+        // ДОБАВЬ ЭТИ ФУНКЦИИ ДЛЯ PWA
+        // Проверка онлайн/офлайн статуса
+        window.addEventListener('online', function() {
+            showNotification('Соединение восстановлено', 'success');
+        });
+
+        window.addEventListener('offline', function() {
+            showNotification('Работа в офлайн-режиме', 'warning');
+        });
+
+        // Проверяем при загрузке
+        if (!navigator.onLine) {
+            showNotification('Работа в офлайн-режиме', 'warning');
+        }
+        
+        // А ЗДЕСЬ ДАЛЬШЕ ИДЕТ ТВОЙ ОСНОВНОЙ JAVASCRIPT КОД
+        // Основные переменные
+        let currentDate = new Date();
+        let workData = JSON.parse(localStorage.getItem('workData')) || {
+            projects: {
+                'default': {
+                    name: 'Основной проект',
+                    startDate: '',
+                    workHours: 8,
+                    endDate: '',
+                    hourlyRate: 500,
+                    workDays: {},
+                    autoFillEnabled: false,
+                    lastAutoFill: null
+                }
+            },
+            currentProject: 'default',
+            theme: 'light'
+        };
+        
+        // ... и весь остальной твой JavaScript код ...
+        
+    </script>
+</body>
+</html>
