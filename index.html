@@ -1028,4 +1028,888 @@
                     workHours: 8,
                     endDate: '',
                     hourlyRate: 500,
-                    work
+                    workDays: {},
+                    autoFillEnabled: false,
+                    lastAutoFill: null
+                }
+            },
+            currentProject: 'default',
+            theme: 'light'
+        };
+        
+        let editingProjectId = null;
+        
+        // Элементы DOM
+        const projectSelect = document.getElementById('projectSelect');
+        const projectInfo = document.getElementById('projectInfo');
+        const currentMonthElement = document.getElementById('currentMonth');
+        const calendarGrid = document.getElementById('calendarGrid');
+        const prevMonthBtn = document.getElementById('prevMonth');
+        const nextMonthBtn = document.getElementById('nextMonth');
+        const workedDaysElement = document.getElementById('workedDays');
+        const workedHoursElement = document.getElementById('workedHours');
+        const earnedAmountElement = document.getElementById('earnedAmount');
+        const remainingDaysElement = document.getElementById('remainingDays');
+        const overtimeElement = document.getElementById('overtime');
+        const undertimeElement = document.getElementById('undertime');
+        const vacationDaysElement = document.getElementById('vacationDays');
+        const sickDaysElement = document.getElementById('sickDays');
+        const notificationElement = document.getElementById('notification');
+        const newProjectNameInput = document.getElementById('newProjectName');
+        const addProjectBtn = document.getElementById('addProject');
+        const projectsListElement = document.getElementById('projectsList');
+        const dateModal = document.getElementById('dateModal');
+        const modalDateTitle = document.getElementById('modalDateTitle');
+        const modalDateInfo = document.getElementById('modalDateInfo');
+        const editProjectModal = document.getElementById('editProjectModal');
+        const editProjectNameInput = document.getElementById('editProjectName');
+        const editStartDateInput = document.getElementById('editStartDate');
+        const editWorkHoursInput = document.getElementById('editWorkHours');
+        const editEndDateInput = document.getElementById('editEndDate');
+        const editHourlyRateInput = document.getElementById('editHourlyRate');
+        const autoFillEnabledCheckbox = document.getElementById('autoFillEnabled');
+        const autoFillStatusElement = document.getElementById('autoFillStatus');
+        const saveProjectBtn = document.getElementById('saveProject');
+        const autoFillModal = document.getElementById('autoFillModal');
+        const autoFillWeekdaysBtn = document.getElementById('autoFillWeekdays');
+        const autoFillCustomBtn = document.getElementById('autoFillCustom');
+        const applyAutoFillBtn = document.getElementById('applyAutoFill');
+        const autoStartDateInput = document.getElementById('autoStartDate');
+        const autoEndDateInput = document.getElementById('autoEndDate');
+        const themeToggleBtn = document.getElementById('themeToggle');
+        const miniWorkedDays = document.getElementById('miniWorkedDays');
+        const miniWorkedHours = document.getElementById('miniWorkedHours');
+        const miniEarned = document.getElementById('miniEarned');
+        const miniRemaining = document.getElementById('miniRemaining');
+        const periodStartDateInput = document.getElementById('periodStartDate');
+        const periodEndDateInput = document.getElementById('periodEndDate');
+        const loadPeriodStatsBtn = document.getElementById('loadPeriodStats');
+        const periodStatsElement = document.getElementById('periodStats');
+        const totalStatsElement = document.getElementById('totalStats');
+        const monthsSelectorElement = document.getElementById('monthsSelector');
+        const monthlyStatsElement = document.getElementById('monthlyStats');
+        const projectsStatsElement = document.getElementById('projectsStats');
+        
+        let selectedDate = null;
+        
+        // Инициализация
+        function init() {
+            applyTheme(workData.theme);
+            updateProjectSelect();
+            loadCurrentProjectData();
+            updateProjectInfo();
+            
+            const today = new Date();
+            const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+            autoStartDateInput.value = formatDate(firstDay);
+            autoEndDateInput.value = formatDate(today);
+            periodStartDateInput.value = formatDate(firstDay);
+            periodEndDateInput.value = formatDate(today);
+            
+            renderCalendar();
+            updateStats();
+            initTabs();
+            initStatsTabs();
+            checkNotifications();
+            initModals();
+            checkAutoFill();
+            loadTotalStats();
+            loadMonthlyStats();
+            loadProjectsStats();
+        }
+        
+        function applyTheme(theme) {
+            if (theme === 'dark') {
+                document.body.classList.add('dark-theme');
+                themeToggleBtn.innerHTML = '<i class="fas fa-sun"></i>';
+                workData.theme = 'dark';
+            } else {
+                document.body.classList.remove('dark-theme');
+                themeToggleBtn.innerHTML = '<i class="fas fa-moon"></i>';
+                workData.theme = 'light';
+            }
+            localStorage.setItem('workData', JSON.stringify(workData));
+        }
+        
+        themeToggleBtn.addEventListener('click', function() {
+            if (workData.theme === 'light') {
+                applyTheme('dark');
+            } else {
+                applyTheme('light');
+            }
+        });
+        
+        function initTabs() {
+            const tabs = document.querySelectorAll('.tab, .nav-item');
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const tabId = this.getAttribute('data-tab');
+                    tabs.forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+                    this.classList.add('active');
+                    document.getElementById(`${tabId}-tab`).classList.add('active');
+                    
+                    if (tabId === 'projects') {
+                        renderProjectsList();
+                    }
+                    if (tabId === 'stats') {
+                        updateStats();
+                    }
+                });
+            });
+        }
+        
+        function initStatsTabs() {
+            const statsTabs = document.querySelectorAll('.stats-tab');
+            statsTabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const statsTabId = this.getAttribute('data-stats-tab');
+                    statsTabs.forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.stats-content').forEach(sc => sc.classList.remove('active'));
+                    this.classList.add('active');
+                    document.getElementById(`stats-${statsTabId}`).classList.add('active');
+                    
+                    if (statsTabId === 'total') {
+                        loadTotalStats();
+                        loadMonthlyStats();
+                    } else if (statsTabId === 'projects') {
+                        loadProjectsStats();
+                    } else if (statsTabId === 'period') {
+                        loadPeriodStats();
+                    }
+                });
+            });
+            
+            loadPeriodStatsBtn.addEventListener('click', function() {
+                loadPeriodStats();
+            });
+        }
+        
+        function initModals() {
+            document.querySelectorAll('.close-modal').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    dateModal.style.display = 'none';
+                    editProjectModal.style.display = 'none';
+                    autoFillModal.style.display = 'none';
+                });
+            });
+            
+            window.addEventListener('click', function(event) {
+                if (event.target === dateModal) dateModal.style.display = 'none';
+                if (event.target === editProjectModal) editProjectModal.style.display = 'none';
+                if (event.target === autoFillModal) autoFillModal.style.display = 'none';
+            });
+            
+            document.querySelectorAll('.modal-actions button').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const action = this.getAttribute('data-action');
+                    handleDateAction(selectedDate, action);
+                    dateModal.style.display = 'none';
+                });
+            });
+            
+            saveProjectBtn.addEventListener('click', function() {
+                saveProjectChanges();
+            });
+            
+            autoFillWeekdaysBtn.addEventListener('click', function() {
+                autoFillWorkDays(true);
+            });
+            
+            autoFillCustomBtn.addEventListener('click', function() {
+                autoFillModal.style.display = 'flex';
+            });
+            
+            applyAutoFillBtn.addEventListener('click', function() {
+                const startDate = new Date(autoStartDateInput.value);
+                const endDate = new Date(autoEndDateInput.value);
+                const excludeWeekends = document.getElementById('excludeWeekends').checked;
+                
+                if (isNaN(startDate) || isNaN(endDate)) {
+                    showNotification('Выберите корректные даты', 'error');
+                    return;
+                }
+                
+                autoFillWorkDays(excludeWeekends, startDate, endDate);
+                autoFillModal.style.display = 'none';
+            });
+        }
+        
+        function updateProjectSelect() {
+            projectSelect.innerHTML = '';
+            for (const projectId in workData.projects) {
+                const project = workData.projects[projectId];
+                const option = document.createElement('option');
+                option.value = projectId;
+                option.textContent = project.name;
+                projectSelect.appendChild(option);
+            }
+            projectSelect.value = workData.currentProject;
+        }
+        
+        function loadCurrentProjectData() {
+            // Данные загружаются автоматически из workData
+        }
+        
+        function updateProjectInfo() {
+            const currentProject = workData.projects[workData.currentProject];
+            if (!currentProject) return;
+            
+            let infoHTML = `
+                <h2>Информация о проекте</h2>
+                <div class="project-details">
+                    <div class="project-detail">
+                        <span class="detail-label">Дата начала:</span>
+                        <span>${currentProject.startDate || 'не указана'}</span>
+                    </div>
+                    <div class="project-detail">
+                        <span class="detail-label">Дата окончания:</span>
+                        <span>${currentProject.endDate || 'не указана'}</span>
+                    </div>
+                    <div class="project-detail">
+                        <span class="detail-label">Рабочий день:</span>
+                        <span>${currentProject.workHours} часов</span>
+                    </div>
+                    <div class="project-detail">
+                        <span class="detail-label">Ставка:</span>
+                        <span>${currentProject.hourlyRate} руб/час</span>
+                    </div>
+                    <div class="project-detail">
+                        <span class="detail-label">Автозаполнение:</span>
+                        <span>${currentProject.autoFillEnabled ? 'Включено' : 'Отключено'}</span>
+                    </div>
+                </div>
+                <button id="editProject" class="btn-sm" style="margin-top: 10px;">Редактировать проект</button>
+            `;
+            
+            projectInfo.innerHTML = infoHTML;
+            document.getElementById('editProject').addEventListener('click', function() {
+                openEditProjectModal(workData.currentProject);
+            });
+        }
+        
+        projectSelect.addEventListener('change', function() {
+            workData.currentProject = this.value;
+            localStorage.setItem('workData', JSON.stringify(workData));
+            loadCurrentProjectData();
+            updateProjectInfo();
+            renderCalendar();
+            updateStats();
+        });
+        
+        addProjectBtn.addEventListener('click', function() {
+            const projectName = newProjectNameInput.value.trim();
+            if (!projectName) {
+                showNotification('Введите название проекта', 'error');
+                return;
+            }
+            
+            const projectId = 'project_' + Date.now();
+            workData.projects[projectId] = {
+                name: projectName,
+                startDate: '',
+                workHours: 8,
+                endDate: '',
+                hourlyRate: 500,
+                workDays: {},
+                autoFillEnabled: false,
+                lastAutoFill: null
+            };
+            
+            localStorage.setItem('workData', JSON.stringify(workData));
+            updateProjectSelect();
+            newProjectNameInput.value = '';
+            showNotification('Проект добавлен!');
+            renderProjectsList();
+        });
+        
+        function renderProjectsList() {
+            projectsListElement.innerHTML = '';
+            for (const projectId in workData.projects) {
+                const project = workData.projects[projectId];
+                const stats = calculateProjectStats(projectId, 'all');
+                
+                const projectCard = document.createElement('div');
+                projectCard.className = 'project-card';
+                projectCard.innerHTML = `
+                    <div class="project-header">
+                        <div class="project-name">${project.name}</div>
+                        <div class="project-actions">
+                            <button class="btn-sm edit-project" data-project="${projectId}">Редактировать</button>
+                            <button class="btn-sm delete-project" data-project="${projectId}">Удалить</button>
+                        </div>
+                    </div>
+                    <div class="project-details">
+                        <div class="project-detail">
+                            <span class="detail-label">Начало:</span>
+                            <span>${project.startDate || 'не указано'}</span>
+                        </div>
+                        <div class="project-detail">
+                            <span class="detail-label">Окончание:</span>
+                            <span>${project.endDate || 'не указано'}</span>
+                        </div>
+                        <div class="project-detail">
+                            <span class="detail-label">Ставка:</span>
+                            <span>${project.hourlyRate} руб/час</span>
+                        </div>
+                        <div class="project-detail">
+                            <span class="detail-label">Автозаполнение:</span>
+                            <span>${project.autoFillEnabled ? 'Включено' : 'Отключено'}</span>
+                        </div>
+                    </div>
+                    <div class="stats-grid" style="margin-top: 10px;">
+                        <div class="stat-card">
+                            <div class="stat-value">${stats.days}</div>
+                            <div class="stat-label">Дней</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">${stats.hours}</div>
+                            <div class="stat-label">Часов</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value">${stats.earned} руб</div>
+                            <div class="stat-label">Заработано</div>
+                        </div>
+                    </div>
+                `;
+                projectsListElement.appendChild(projectCard);
+            }
+            
+            document.querySelectorAll('.edit-project').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const projectId = this.getAttribute('data-project');
+                    openEditProjectModal(projectId);
+                });
+            });
+            
+            document.querySelectorAll('.delete-project').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const projectId = this.getAttribute('data-project');
+                    if (Object.keys(workData.projects).length <= 1) {
+                        showNotification('Нельзя удалить единственный проект', 'error');
+                        return;
+                    }
+                    if (confirm('Вы уверены, что хотите удалить этот проект?')) {
+                        delete workData.projects[projectId];
+                        if (workData.currentProject === projectId) {
+                            workData.currentProject = Object.keys(workData.projects)[0];
+                        }
+                        localStorage.setItem('workData', JSON.stringify(workData));
+                        updateProjectSelect();
+                        loadCurrentProjectData();
+                        updateProjectInfo();
+                        renderProjectsList();
+                        renderCalendar();
+                        updateStats();
+                        showNotification('Проект удален');
+                    }
+                });
+            });
+        }
+        
+        function openEditProjectModal(projectId) {
+            editingProjectId = projectId;
+            const project = workData.projects[projectId];
+            editProjectNameInput.value = project.name;
+            editStartDateInput.value = project.startDate;
+            editWorkHoursInput.value = project.workHours;
+            editEndDateInput.value = project.endDate;
+            editHourlyRateInput.value = project.hourlyRate;
+            autoFillEnabledCheckbox.checked = project.autoFillEnabled;
+            updateAutoFillStatus(project.autoFillEnabled);
+            editProjectModal.style.display = 'flex';
+        }
+        
+        function saveProjectChanges() {
+            if (!editingProjectId) return;
+            const project = workData.projects[editingProjectId];
+            project.name = editProjectNameInput.value;
+            project.startDate = editStartDateInput.value;
+            project.workHours = parseInt(editWorkHoursInput.value);
+            project.endDate = editEndDateInput.value;
+            project.hourlyRate = parseInt(editHourlyRateInput.value);
+            project.autoFillEnabled = autoFillEnabledCheckbox.checked;
+            
+            if (project.autoFillEnabled) {
+                project.lastAutoFill = new Date().toISOString().split('T')[0];
+            }
+            
+            localStorage.setItem('workData', JSON.stringify(workData));
+            updateProjectSelect();
+            updateProjectInfo();
+            renderProjectsList();
+            renderCalendar();
+            updateStats();
+            editProjectModal.style.display = 'none';
+            showNotification('Проект обновлен!');
+        }
+        
+        function updateAutoFillStatus(enabled) {
+            const indicator = autoFillStatusElement.querySelector('.status-indicator');
+            const text = autoFillStatusElement.querySelector('span');
+            if (enabled) {
+                indicator.className = 'status-indicator status-active';
+                text.textContent = 'Автозаполнение включено';
+            } else {
+                indicator.className = 'status-indicator status-inactive';
+                text.textContent = 'Автозаполнение отключено';
+            }
+        }
+        
+        prevMonthBtn.addEventListener('click', function() {
+            currentDate.setMonth(currentDate.getMonth() - 1);
+            renderCalendar();
+        });
+        
+        nextMonthBtn.addEventListener('click', function() {
+            currentDate.setMonth(currentDate.getMonth() + 1);
+            renderCalendar();
+        });
+        
+        function renderCalendar() {
+            calendarGrid.innerHTML = '';
+            const monthNames = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"];
+            currentMonthElement.textContent = `${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
+            
+            const dayNames = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
+            dayNames.forEach(day => {
+                const dayElement = document.createElement('div');
+                dayElement.className = 'calendar-day';
+                dayElement.textContent = day;
+                calendarGrid.appendChild(dayElement);
+            });
+            
+            const firstDay = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+            const lastDay = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+            const daysInMonth = lastDay.getDate();
+            
+            let firstDayOfWeek = firstDay.getDay();
+            firstDayOfWeek = firstDayOfWeek === 0 ? 6 : firstDayOfWeek - 1;
+            
+            for (let i = 0; i < firstDayOfWeek; i++) {
+                const emptyDate = document.createElement('div');
+                emptyDate.className = 'calendar-date empty-date';
+                calendarGrid.appendChild(emptyDate);
+            }
+            
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const currentProject = workData.projects[workData.currentProject];
+            
+            for (let day = 1; day <= daysInMonth; day++) {
+                const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
+                const dateString = formatDate(date);
+                
+                const dateElement = document.createElement('div');
+                dateElement.className = 'calendar-date';
+                dateElement.setAttribute('data-date', dateString);
+                
+                if (date.getTime() === today.getTime()) {
+                    dateElement.classList.add('today');
+                }
+                
+                const dayOfWeek = date.getDay();
+                if (dayOfWeek === 0 || dayOfWeek === 6) {
+                    dateElement.classList.add('weekend');
+                }
+                
+                if (currentProject.workDays && currentProject.workDays[dateString]) {
+                    const dayType = currentProject.workDays[dateString].type || 'work';
+                    dateElement.classList.add(dayType === 'work' ? 'work-day' : dayType === 'vacation' ? 'vacation' : 'sick');
+                }
+                
+                const dayNumber = document.createElement('div');
+                dayNumber.className = 'date-number';
+                dayNumber.textContent = day;
+                dateElement.appendChild(dayNumber);
+                
+                const indicator = document.createElement('div');
+                indicator.className = 'date-indicator';
+                
+                if (currentProject.workDays && currentProject.workDays[dateString]) {
+                    const dayData = currentProject.workDays[dateString];
+                    if (dayData.type === 'work') indicator.classList.add('indicator-work');
+                    else if (dayData.type === 'vacation') indicator.classList.add('indicator-vacation');
+                    else if (dayData.type === 'sick') indicator.classList.add('indicator-sick');
+                }
+                dateElement.appendChild(indicator);
+                
+                if (currentProject.workDays && currentProject.workDays[dateString]) {
+                    const dayData = currentProject.workDays[dateString];
+                    if (dayData.type === 'work') {
+                        const workInfo = document.createElement('div');
+                        workInfo.className = 'work-info';
+                        const actualHours = dayData.actualHours || currentProject.workHours;
+                        workInfo.textContent = `${actualHours}ч / ${actualHours * currentProject.hourlyRate}р`;
+                        dateElement.appendChild(workInfo);
+                    }
+                }
+                
+                dateElement.addEventListener('click', function() {
+                    const dateStr = this.getAttribute('data-date');
+                    openDateModal(dateStr);
+                });
+                
+                calendarGrid.appendChild(dateElement);
+            }
+        }
+        
+        function openDateModal(dateString) {
+            selectedDate = dateString;
+            const date = new Date(dateString);
+            const dateFormatted = formatDateDisplay(date);
+            modalDateTitle.textContent = dateFormatted;
+            
+            const currentProject = workData.projects[workData.currentProject];
+            const dayData = currentProject.workDays && currentProject.workDays[dateString];
+            
+            let infoHTML = '';
+            if (dayData) {
+                if (dayData.type === 'work') {
+                    const actualHours = dayData.actualHours || currentProject.workHours;
+                    infoHTML = `<p>Тип: Рабочий день</p><p>Отработано часов: ${actualHours}</p><p>Заработано: ${actualHours * currentProject.hourlyRate} руб</p>`;
+                } else if (dayData.type === 'vacation') {
+                    infoHTML = `<p>Тип: Отпуск</p>`;
+                } else if (dayData.type === 'sick') {
+                    infoHTML = `<p>Тип: Больничный</p>`;
+                }
+            } else {
+                infoHTML = `<p>День не отмечен</p>`;
+            }
+            
+            modalDateInfo.innerHTML = infoHTML;
+            dateModal.style.display = 'flex';
+        }
+        
+        function handleDateAction(dateString, action) {
+            const currentProject = workData.projects[workData.currentProject];
+            if (!currentProject.workDays) currentProject.workDays = {};
+            
+            if (action === 'remove') {
+                delete currentProject.workDays[dateString];
+            } else {
+                if (action === 'work') {
+                    const actualHours = prompt('Введите фактическое количество часов:', currentProject.workHours);
+                    if (actualHours === null) return;
+                    currentProject.workDays[dateString] = {
+                        type: action,
+                        actualHours: parseFloat(actualHours) || currentProject.workHours
+                    };
+                } else {
+                    currentProject.workDays[dateString] = { type: action };
+                }
+            }
+            
+            localStorage.setItem('workData', JSON.stringify(workData));
+            renderCalendar();
+            updateStats();
+            checkNotifications();
+            showNotification('Данные обновлены!');
+        }
+        
+        function autoFillWorkDays(excludeWeekends = true, startDate = null, endDate = null) {
+            const currentProject = workData.projects[workData.currentProject];
+            if (!startDate || !endDate) {
+                startDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+                endDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+            }
+            
+            if (!currentProject.workDays) currentProject.workDays = {};
+            let filledDays = 0;
+            const currentDateObj = new Date(startDate);
+            
+            while (currentDateObj <= endDate) {
+                const dateString = formatDate(currentDateObj);
+                const dayOfWeek = currentDateObj.getDay();
+                
+                if (excludeWeekends && (dayOfWeek === 0 || dayOfWeek === 6)) {
+                    currentDateObj.setDate(currentDateObj.getDate() + 1);
+                    continue;
+                }
+                
+                if (!currentProject.workDays[dateString]) {
+                    currentProject.workDays[dateString] = {
+                        type: 'work',
+                        actualHours: currentProject.workHours
+                    };
+                    filledDays++;
+                }
+                currentDateObj.setDate(currentDateObj.getDate() + 1);
+            }
+            
+            localStorage.setItem('workData', JSON.stringify(workData));
+            renderCalendar();
+            updateStats();
+            showNotification(`Заполнено ${filledDays} рабочих дней!`);
+        }
+        
+        function checkAutoFill() {
+            for (const projectId in workData.projects) {
+                const project = workData.projects[projectId];
+                if (project.autoFillEnabled) {
+                    const today = new Date().toISOString().split('T')[0];
+                    if (!project.workDays[today]) {
+                        const dayOfWeek = new Date().getDay();
+                        if (dayOfWeek === 0 || dayOfWeek === 6) continue;
+                        project.workDays[today] = { type: 'work', actualHours: project.workHours };
+                        project.lastAutoFill = today;
+                        showNotification(`Автоматически отмечен сегодняшний день в проекте "${project.name}"`);
+                    }
+                }
+            }
+            localStorage.setItem('workData', JSON.stringify(workData));
+            renderCalendar();
+            updateStats();
+        }
+        
+        function updateStats() {
+            const stats = calculateProjectStats(workData.currentProject, 'current');
+            workedDaysElement.textContent = stats.days;
+            workedHoursElement.textContent = stats.hours;
+            earnedAmountElement.textContent = `${stats.earned.toLocaleString()} руб`;
+            overtimeElement.textContent = `${stats.overtime} ч`;
+            undertimeElement.textContent = `${stats.undertime} ч`;
+            vacationDaysElement.textContent = stats.vacationDays;
+            sickDaysElement.textContent = stats.sickDays;
+            
+            miniWorkedDays.textContent = stats.days;
+            miniWorkedHours.textContent = stats.hours;
+            miniEarned.textContent = `${stats.earned.toLocaleString()} руб`;
+            
+            const currentProject = workData.projects[workData.currentProject];
+            if (currentProject.startDate && currentProject.endDate) {
+                const startDate = new Date(currentProject.startDate);
+                const endDate = new Date(currentProject.endDate);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const timeDiff = endDate.getTime() - today.getTime();
+                const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
+                remainingDaysElement.textContent = daysDiff > 0 ? daysDiff : 0;
+                miniRemaining.textContent = daysDiff > 0 ? daysDiff : 0;
+            } else {
+                remainingDaysElement.textContent = '0';
+                miniRemaining.textContent = '0';
+            }
+        }
+        
+        function calculateProjectStats(projectId, period = 'current') {
+            const project = workData.projects[projectId];
+            if (!project || !project.workDays) return { days: 0, hours: 0, earned: 0, overtime: 0, undertime: 0, vacationDays: 0, sickDays: 0 };
+            
+            let days = 0, hours = 0, earned = 0, overtime = 0, undertime = 0, vacationDays = 0, sickDays = 0;
+            let startDate, endDate;
+            
+            if (period === 'current') {
+                startDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+                endDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+            } else if (period === 'all') {
+                startDate = project.startDate ? new Date(project.startDate) : new Date(0);
+                endDate = project.endDate ? new Date(project.endDate) : new Date();
+            } else {
+                startDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+                endDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+            }
+            
+            for (const dateString in project.workDays) {
+                const date = new Date(dateString);
+                if (date < startDate || date > endDate) continue;
+                
+                const dayData = project.workDays[dateString];
+                if (dayData.type === 'work') {
+                    days++;
+                    const actualHours = dayData.actualHours || project.workHours;
+                    hours += actualHours;
+                    earned += actualHours * project.hourlyRate;
+                    if (actualHours > project.workHours) overtime += actualHours - project.workHours;
+                    else if (actualHours < project.workHours) undertime += project.workHours - actualHours;
+                } else if (dayData.type === 'vacation') vacationDays++;
+                else if (dayData.type === 'sick') sickDays++;
+            }
+            
+            return { days, hours, earned, overtime, undertime, vacationDays, sickDays };
+        }
+        
+        function loadPeriodStats() {
+            const startDate = new Date(periodStartDateInput.value);
+            const endDate = new Date(periodEndDateInput.value);
+            if (isNaN(startDate) || isNaN(endDate)) {
+                showNotification('Выберите корректные даты', 'error');
+                return;
+            }
+            
+            const currentProject = workData.projects[workData.currentProject];
+            let days = 0, hours = 0, earned = 0, overtime = 0, undertime = 0, vacationDays = 0, sickDays = 0;
+            
+            for (const dateString in currentProject.workDays) {
+                const date = new Date(dateString);
+                if (date < startDate || date > endDate) continue;
+                
+                const dayData = currentProject.workDays[dateString];
+                if (dayData.type === 'work') {
+                    days++;
+                    const actualHours = dayData.actualHours || currentProject.workHours;
+                    hours += actualHours;
+                    earned += actualHours * currentProject.hourlyRate;
+                    if (actualHours > currentProject.workHours) overtime += actualHours - currentProject.workHours;
+                    else if (actualHours < currentProject.workHours) undertime += currentProject.workHours - actualHours;
+                } else if (dayData.type === 'vacation') vacationDays++;
+                else if (dayData.type === 'sick') sickDays++;
+            }
+            
+            periodStatsElement.innerHTML = `
+                <div class="stat-card"><div class="stat-value">${days}</div><div class="stat-label">Отработано дней</div></div>
+                <div class="stat-card"><div class="stat-value">${hours}</div><div class="stat-label">Отработано часов</div></div>
+                <div class="stat-card"><div class="stat-value">${overtime} ч</div><div class="stat-label">Переработка</div></div>
+                <div class="stat-card"><div class="stat-value">${undertime} ч</div><div class="stat-label">Недоработка</div></div>
+                <div class="stat-card"><div class="stat-value">${earned.toLocaleString()} руб</div><div class="stat-label">Заработано</div></div>
+                <div class="stat-card"><div class="stat-value">${vacationDays}</div><div class="stat-label">Отпускных дней</div></div>
+                <div class="stat-card"><div class="stat-value">${sickDays}</div><div class="stat-label">Больничных дней</div></div>
+            `;
+        }
+        
+        function loadTotalStats() {
+            const currentProject = workData.projects[workData.currentProject];
+            const stats = calculateProjectStats(workData.currentProject, 'all');
+            totalStatsElement.innerHTML = `
+                <div class="stat-card"><div class="stat-value">${stats.days}</div><div class="stat-label">Отработано дней</div></div>
+                <div class="stat-card"><div class="stat-value">${stats.hours}</div><div class="stat-label">Отработано часов</div></div>
+                <div class="stat-card"><div class="stat-value">${stats.overtime} ч</div><div class="stat-label">Переработка</div></div>
+                <div class="stat-card"><div class="stat-value">${stats.undertime} ч</div><div class="stat-label">Недоработка</div></div>
+                <div class="stat-card"><div class="stat-value">${stats.earned.toLocaleString()} руб</div><div class="stat-label">Заработано</div></div>
+                <div class="stat-card"><div class="stat-value">${stats.vacationDays}</div><div class="stat-label">Отпускных дней</div></div>
+                <div class="stat-card"><div class="stat-value">${stats.sickDays}</div><div class="stat-label">Больничных дней</div></div>
+            `;
+        }
+        
+        function loadMonthlyStats() {
+            const currentProject = workData.projects[workData.currentProject];
+            const months = [];
+            const currentYear = new Date().getFullYear();
+            
+            for (let i = 0; i < 12; i++) {
+                const monthDate = new Date(currentYear, i, 1);
+                months.push({
+                    name: monthDate.toLocaleDateString('ru-RU', { month: 'long' }),
+                    year: currentYear,
+                    start: new Date(currentYear, i, 1),
+                    end: new Date(currentYear, i + 1, 0)
+                });
+            }
+            
+            monthsSelectorElement.innerHTML = '';
+            months.forEach(month => {
+                const button = document.createElement('div');
+                button.className = 'period-btn';
+                button.textContent = month.name;
+                button.addEventListener('click', function() {
+                    document.querySelectorAll('.period-btn').forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+                    loadMonthStats(month.start, month.end);
+                });
+                monthsSelectorElement.appendChild(button);
+            });
+            
+            if (monthsSelectorElement.children.length > 0) {
+                monthsSelectorElement.children[new Date().getMonth()].classList.add('active');
+                loadMonthStats(months[new Date().getMonth()].start, months[new Date().getMonth()].end);
+            }
+        }
+        
+        function loadMonthStats(startDate, endDate) {
+            const currentProject = workData.projects[workData.currentProject];
+            let days = 0, hours = 0, earned = 0, overtime = 0, undertime = 0, vacationDays = 0, sickDays = 0;
+            
+            for (const dateString in currentProject.workDays) {
+                const date = new Date(dateString);
+                if (date < startDate || date > endDate) continue;
+                
+                const dayData = currentProject.workDays[dateString];
+                if (dayData.type === 'work') {
+                    days++;
+                    const actualHours = dayData.actualHours || currentProject.workHours;
+                    hours += actualHours;
+                    earned += actualHours * currentProject.hourlyRate;
+                    if (actualHours > currentProject.workHours) overtime += actualHours - currentProject.workHours;
+                    else if (actualHours < currentProject.workHours) undertime += currentProject.workHours - actualHours;
+                } else if (dayData.type === 'vacation') vacationDays++;
+                else if (dayData.type === 'sick') sickDays++;
+            }
+            
+            monthlyStatsElement.innerHTML = `
+                <div class="stat-card"><div class="stat-value">${days}</div><div class="stat-label">Отработано дней</div></div>
+                <div class="stat-card"><div class="stat-value">${hours}</div><div class="stat-label">Отработано часов</div></div>
+                <div class="stat-card"><div class="stat-value">${overtime} ч</div><div class="stat-label">Переработка</div></div>
+                <div class="stat-card"><div class="stat-value">${undertime} ч</div><div class="stat-label">Недоработка</div></div>
+                <div class="stat-card"><div class="stat-value">${earned.toLocaleString()} руб</div><div class="stat-label">Заработано</div></div>
+                <div class="stat-card"><div class="stat-value">${vacationDays}</div><div class="stat-label">Отпускных дней</div></div>
+                <div class="stat-card"><div class="stat-value">${sickDays}</div><div class="stat-label">Больничных дней</div></div>
+            `;
+        }
+        
+        function loadProjectsStats() {
+            projectsStatsElement.innerHTML = '';
+            for (const projectId in workData.projects) {
+                const project = workData.projects[projectId];
+                const stats = calculateProjectStats(projectId, 'all');
+                
+                const projectStatCard = document.createElement('div');
+                projectStatCard.className = 'project-stat-card';
+                projectStatCard.innerHTML = `
+                    <div class="project-stat-header">
+                        <div class="project-stat-name">${project.name}</div>
+                        <div class="project-stat-period">За все время</div>
+                    </div>
+                    <div class="project-stats-grid">
+                        <div class="stat-card"><div class="stat-value">${stats.days}</div><div class="stat-label">Отработано дней</div></div>
+                        <div class="stat-card"><div class="stat-value">${stats.hours}</div><div class="stat-label">Отработано часов</div></div>
+                        <div class="stat-card"><div class="stat-value">${stats.earned.toLocaleString()} руб</div><div class="stat-label">Заработано</div></div>
+                        <div class="stat-card"><div class="stat-value">${stats.vacationDays + stats.sickDays}</div><div class="stat-label">Нерабочих дней</div></div>
+                    </div>
+                `;
+                projectsStatsElement.appendChild(projectStatCard);
+            }
+        }
+        
+        function checkNotifications() {
+            const currentProject = workData.projects[workData.currentProject];
+            if (currentProject.endDate) {
+                const endDate = new Date(currentProject.endDate);
+                const today = new Date();
+                const timeDiff = endDate.getTime() - today.getTime();
+                const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
+                if (daysDiff <= 7 && daysDiff > 0) {
+                    showNotification(`До окончания проекта осталось ${daysDiff} дней`, 'warning');
+                }
+            }
+            
+            const stats = calculateProjectStats(workData.currentProject);
+            if (stats.overtime > 10) {
+                showNotification(`В этом месяце переработка: ${stats.overtime} часов`, 'warning');
+            }
+        }
+        
+        function showNotification(message, type = 'success') {
+            notificationElement.textContent = message;
+            notificationElement.className = 'notification ' + (type === 'error' ? 'error' : type === 'warning' ? 'warning' : '');
+            notificationElement.style.display = 'block';
+            setTimeout(() => { notificationElement.style.display = 'none'; }, 5000);
+        }
+        
+        function formatDate(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+        
+        function formatDateDisplay(date) {
+            const options = { day: 'numeric', month: 'long', year: 'numeric', weekday: 'long' };
+            return date.toLocaleDateString('ru-RU', options);
+        }
+        
+        // Запуск приложения
+        init();
+        setInterval(checkAutoFill, 10000);
+    </script>
+</body>
+</html>
