@@ -5,14 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Рабочий табель</title>
     
-    <!-- Эти теги делают приложение "приложением" -->
+    <!-- Настройки для iPhone -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Рабочий табель">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#3498db">
     
-    <!-- Иконка для iPhone -->
+    <!-- Иконки -->
     <link rel="apple-touch-icon" href="icons/icon-192.png">
     
     <!-- Файл настроек приложения -->
@@ -20,7 +20,7 @@
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* ВСТАВЬ СЮДА ВЕСЬ ТВОЙ CSS КОД КОТОРЫЙ БЫЛ РАНЕЕ */
+        /* ВСТАВЬ СЮДА ВЕСЬ CSS КОД ИЗ ПРЕДЫДУЩЕЙ ВЕРСИИ */
         * {
             box-sizing: border-box;
             margin: 0;
@@ -30,16 +30,678 @@
         
         :root {
             --primary: #3498db;
-            /* ... и все остальные переменные ... */
+            --primary-dark: #2980b9;
+            --success: #2ecc71;
+            --warning: #f39c12;
+            --danger: #e74c3c;
+            --light: #f8f9fa;
+            --dark: #343a40;
+            --gray: #6c757d;
+            --border: #dee2e6;
+            --bg-color: #ffffff;
+            --text-color: #333333;
+            --card-bg: #ffffff;
+            --section-bg: #f8f9fa;
         }
         
-        /* ... ВСТАВЬ ВЕСЬ ОСТАЛЬНОЙ CSS ... */
+        .dark-theme {
+            --primary: #4aa8ff;
+            --primary-dark: #3a87cc;
+            --success: #27ae60;
+            --warning: #e67e22;
+            --danger: #c0392b;
+            --light: #2c3e50;
+            --dark: #ecf0f1;
+            --gray: #95a5a6;
+            --border: #34495e;
+            --bg-color: #1a1a1a;
+            --text-color: #ecf0f1;
+            --card-bg: #2c3e50;
+            --section-bg: #34495e;
+        }
         
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 0;
+            font-size: 14px;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+            background-color: var(--bg-color);
+            min-height: 100vh;
+            padding: 15px;
+            position: relative;
+        }
+        
+        h1, h2, h3 {
+            color: var(--text-color);
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .theme-toggle {
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            color: var(--primary);
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .theme-toggle:hover {
+            background-color: var(--section-bg);
+        }
+        
+        .tabs {
+            display: flex;
+            margin-bottom: 15px;
+            border-bottom: 1px solid var(--border);
+            overflow-x: auto;
+            white-space: nowrap;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .tab {
+            padding: 10px 15px;
+            cursor: pointer;
+            border: 1px solid transparent;
+            border-bottom: none;
+            border-radius: 5px 5px 0 0;
+            margin-right: 5px;
+            font-size: 0.9rem;
+            flex-shrink: 0;
+            background-color: var(--section-bg);
+            color: var(--text-color);
+        }
+        
+        .tab.active {
+            background-color: var(--primary);
+            color: white;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .form-section {
+            background-color: var(--section-bg);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 12px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--text-color);
+        }
+        
+        input, select, button, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            font-size: 1rem;
+            background-color: var(--card-bg);
+            color: var(--text-color);
+        }
+        
+        button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            font-weight: 600;
+        }
+        
+        button:hover {
+            background-color: var(--primary-dark);
+        }
+        
+        .btn-sm {
+            padding: 6px 10px;
+            font-size: 0.8rem;
+        }
+        
+        .calendar-section {
+            margin-top: 20px;
+        }
+        
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .calendar-nav {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .calendar-nav-btn {
+            width: auto;
+            padding: 8px 12px;
+        }
+        
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 3px;
+        }
+        
+        .calendar-day {
+            padding: 8px 5px;
+            text-align: center;
+            font-weight: bold;
+            background-color: var(--section-bg);
+            font-size: 0.8rem;
+            color: var(--text-color);
+        }
+        
+        .calendar-date {
+            height: 60px;
+            padding: 4px;
+            border: 1px solid var(--border);
+            background-color: var(--card-bg);
+            overflow: hidden;
+            font-size: 0.8rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .calendar-date:hover {
+            background-color: var(--section-bg);
+        }
+        
+        .calendar-date.work-day {
+            background-color: rgba(46, 204, 113, 0.2);
+            border-left: 3px solid var(--success);
+        }
+        
+        .calendar-date.weekend {
+            background-color: rgba(231, 76, 60, 0.1);
+        }
+        
+        .calendar-date.today {
+            background-color: rgba(52, 152, 219, 0.2);
+            border: 2px solid var(--primary);
+        }
+        
+        .calendar-date.vacation {
+            background-color: rgba(243, 156, 18, 0.2);
+            border-left: 3px solid var(--warning);
+        }
+        
+        .calendar-date.sick {
+            background-color: rgba(155, 89, 182, 0.2);
+            border-left: 3px solid #9b59b6;
+        }
+        
+        .date-number {
+            font-weight: bold;
+            text-align: left;
+        }
+        
+        .date-indicator {
+            height: 6px;
+            border-radius: 3px;
+            margin-top: 2px;
+        }
+        
+        .indicator-work {
+            background-color: var(--success);
+        }
+        
+        .indicator-vacation {
+            background-color: var(--warning);
+        }
+        
+        .indicator-sick {
+            background-color: #9b59b6;
+        }
+        
+        .work-info {
+            font-size: 0.7rem;
+            margin-top: 2px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        
+        .stats-section {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: var(--section-bg);
+            border-radius: 8px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+        
+        .stat-card {
+            background-color: var(--card-bg);
+            padding: 12px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--primary);
+        }
+        
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--gray);
+        }
+        
+        .empty-date {
+            background-color: var(--section-bg);
+            color: var(--gray);
+        }
+        
+        .mini-stats {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 15px;
+            padding: 10px;
+            background-color: var(--section-bg);
+            border-radius: 8px;
+        }
+        
+        .mini-stat {
+            text-align: center;
+            padding: 8px;
+        }
+        
+        .mini-value {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: var(--primary);
+        }
+        
+        .mini-label {
+            font-size: 0.7rem;
+            color: var(--gray);
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal-content {
+            background-color: var(--card-bg);
+            padding: 20px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 400px;
+            max-height: 80vh;
+            overflow-y: auto;
+            color: var(--text-color);
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .modal-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+        
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--gray);
+            width: auto;
+        }
+        
+        .modal-actions {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .action-btn {
+            padding: 12px;
+            border-radius: 6px;
+            text-align: center;
+            font-weight: bold;
+        }
+        
+        .btn-work {
+            background-color: var(--success);
+        }
+        
+        .btn-vacation {
+            background-color: var(--warning);
+        }
+        
+        .btn-sick {
+            background-color: #9b59b6;
+        }
+        
+        .btn-remove {
+            background-color: var(--gray);
+        }
+        
+        .auto-fill-section {
+            margin-top: 15px;
+            padding: 15px;
+            background-color: var(--section-bg);
+            border-radius: 8px;
+        }
+        
+        .auto-fill-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .auto-fill-btn {
+            padding: 10px;
+            font-size: 0.9rem;
+        }
+        
+        .auto-fill-toggle {
+            display: flex;
+            align-items: center;
+            margin-top: 10px;
+        }
+        
+        .toggle-label {
+            margin-left: 10px;
+            font-weight: normal;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px;
+            background-color: var(--success);
+            color: white;
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            display: none;
+            z-index: 1000;
+            max-width: 300px;
+        }
+        
+        .notification.error {
+            background-color: var(--danger);
+        }
+        
+        .notification.warning {
+            background-color: var(--warning);
+        }
+        
+        .mobile-bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: var(--card-bg);
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            z-index: 100;
+        }
+        
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 0.7rem;
+            color: var(--gray);
+        }
+        
+        .nav-item.active {
+            color: var(--primary);
+        }
+        
+        .nav-icon {
+            font-size: 1.2rem;
+            margin-bottom: 3px;
+        }
+        
+        .project-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .project-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .project-name {
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+        
+        .project-actions {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .project-details {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid var(--border);
+        }
+        
+        .project-detail {
+            margin-bottom: 5px;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .detail-label {
+            font-weight: bold;
+        }
+        
+        .auto-fill-status {
+            display: flex;
+            align-items: center;
+            margin-top: 10px;
+            padding: 8px;
+            background-color: var(--card-bg);
+            border-radius: 4px;
+            border: 1px solid var(--border);
+        }
+        
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        
+        .status-active {
+            background-color: var(--success);
+        }
+        
+        .status-inactive {
+            background-color: var(--gray);
+        }
+        
+        .period-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            overflow-x: auto;
+        }
+        
+        .period-btn {
+            padding: 8px 12px;
+            background-color: var(--section-bg);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            cursor: pointer;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        
+        .period-btn.active {
+            background-color: var(--primary);
+            color: white;
+        }
+        
+        .stats-tabs {
+            display: flex;
+            margin-bottom: 15px;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .stats-tab {
+            padding: 8px 15px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+        }
+        
+        .stats-tab.active {
+            border-bottom-color: var(--primary);
+            color: var(--primary);
+            font-weight: bold;
+        }
+        
+        .project-stats-section {
+            margin-top: 20px;
+        }
+        
+        .project-stat-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .project-stat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        
+        .project-stat-name {
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+        
+        .project-stat-period {
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+        
+        .project-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+        
+        @media (min-width: 768px) {
+            .container {
+                max-width: 750px;
+                padding: 20px;
+            }
+            
+            .calendar-date {
+                height: 80px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+            
+            .mini-stats {
+                grid-template-columns: repeat(4, 1fr);
+            }
+            
+            .mobile-bottom-nav {
+                display: none;
+            }
+            
+            .project-stats-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+        
+        @media (min-width: 992px) {
+            .container {
+                max-width: 1000px;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- ВСТАВЬ СЮДА ВЕСЬ ТВОЙ HTML КОД КОТОРЫЙ БЫЛ РАНЕЕ -->
         <div class="header">
             <h1>Рабочий табель</h1>
             <button class="theme-toggle" id="themeToggle">
@@ -48,40 +710,300 @@
         </div>
         
         <div class="tabs">
-            <!-- ... и так далее весь твой HTML ... -->
+            <div class="tab active" data-tab="main">
+                <i class="fas fa-home"></i> <span class="tab-text">Главная</span>
+            </div>
+            <div class="tab" data-tab="projects">
+                <i class="fas fa-project-diagram"></i> <span class="tab-text">Проекты</span>
+            </div>
+            <div class="tab" data-tab="stats">
+                <i class="fas fa-chart-bar"></i> <span class="tab-text">Статистика</span>
+            </div>
         </div>
         
-        <!-- ... ВСТАВЬ ВЕСЬ ОСТАЛЬНОЙ HTML ... -->
+        <!-- Основная вкладка -->
+        <div class="tab-content active" id="main-tab">
+            <div class="form-section">
+                <h2>Текущий проект</h2>
+                <div class="form-group">
+                    <label for="projectSelect">Проект:</label>
+                    <select id="projectSelect">
+                        <option value="default">Основной проект</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="calendar-section">
+                <div class="calendar-header">
+                    <h2 id="currentMonth"></h2>
+                    <div class="calendar-nav">
+                        <button id="prevMonth" class="calendar-nav-btn"><i class="fas fa-chevron-left"></i></button>
+                        <button id="nextMonth" class="calendar-nav-btn"><i class="fas fa-chevron-right"></i></button>
+                    </div>
+                </div>
+                
+                <div class="calendar-grid" id="calendarGrid">
+                    <!-- Календарь будет сгенерирован здесь -->
+                </div>
+            </div>
+            
+            <div class="mini-stats">
+                <div class="mini-stat">
+                    <div class="mini-value" id="miniWorkedDays">0</div>
+                    <div class="mini-label">Отработано дней</div>
+                </div>
+                <div class="mini-stat">
+                    <div class="mini-value" id="miniWorkedHours">0</div>
+                    <div class="mini-label">Отработано часов</div>
+                </div>
+                <div class="mini-stat">
+                    <div class="mini-value" id="miniEarned">0 руб</div>
+                    <div class="mini-label">Заработано</div>
+                </div>
+                <div class="mini-stat">
+                    <div class="mini-value" id="miniRemaining">0</div>
+                    <div class="mini-label">Осталось дней</div>
+                </div>
+            </div>
+            
+            <!-- Информация о проекте перемещена вниз -->
+            <div class="form-section" id="projectInfo">
+                <!-- Информация о проекте будет здесь -->
+            </div>
+        </div>
+        
+        <!-- Вкладка проектов -->
+        <div class="tab-content" id="projects-tab">
+            <div class="form-section">
+                <h2>Управление проектами</h2>
+                <div class="form-group">
+                    <label for="newProjectName">Название проекта:</label>
+                    <input type="text" id="newProjectName" placeholder="Введите название проекта">
+                </div>
+                <button id="addProject">Добавить проект</button>
+            </div>
+            
+            <div class="projects-section" id="projectsList">
+                <!-- Список проектов будет здесь -->
+            </div>
+        </div>
+        
+        <!-- Вкладка статистики -->
+        <div class="tab-content" id="stats-tab">
+            <div class="stats-tabs">
+                <div class="stats-tab active" data-stats-tab="current">Текущий месяц</div>
+                <div class="stats-tab" data-stats-tab="period">Выбранный период</div>
+                <div class="stats-tab" data-stats-tab="total">За все время</div>
+                <div class="stats-tab" data-stats-tab="projects">По проектам</div>
+            </div>
+            
+            <!-- Статистика за текущий месяц -->
+            <div class="stats-content active" id="stats-current">
+                <div class="stats-section">
+                    <h2>Статистика за текущий месяц</h2>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-value" id="workedDays">0</div>
+                            <div class="stat-label">Отработано дней</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="workedHours">0</div>
+                            <div class="stat-label">Отработано часов</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="overtime">0 ч</div>
+                            <div class="stat-label">Переработка</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="undertime">0 ч</div>
+                            <div class="stat-label">Недоработка</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="earnedAmount">0 руб</div>
+                            <div class="stat-label">Заработано</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="remainingDays">0</div>
+                            <div class="stat-label">Осталось дней</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="vacationDays">0</div>
+                            <div class="stat-label">Отпускных дней</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="sickDays">0</div>
+                            <div class="stat-label">Больничных дней</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Статистика за выбранный период -->
+            <div class="stats-content" id="stats-period">
+                <div class="form-section">
+                    <h2>Выберите период</h2>
+                    <div class="form-group">
+                        <label for="periodStartDate">Дата начала:</label>
+                        <input type="date" id="periodStartDate">
+                    </div>
+                    <div class="form-group">
+                        <label for="periodEndDate">Дата окончания:</label>
+                        <input type="date" id="periodEndDate">
+                    </div>
+                    <button id="loadPeriodStats">Загрузить статистику</button>
+                </div>
+                
+                <div class="stats-section">
+                    <h2>Статистика за выбранный период</h2>
+                    <div class="stats-grid" id="periodStats">
+                        <!-- Статистика за период будет здесь -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Статистика за все время -->
+            <div class="stats-content" id="stats-total">
+                <div class="stats-section">
+                    <h2>Статистика за все время</h2>
+                    <div class="stats-grid" id="totalStats">
+                        <!-- Статистика за все время будет здесь -->
+                    </div>
+                </div>
+                
+                <div class="stats-section">
+                    <h2>Статистика по месяцам</h2>
+                    <div class="period-selector" id="monthsSelector">
+                        <!-- Кнопки месяцев будут здесь -->
+                    </div>
+                    <div class="stats-grid" id="monthlyStats">
+                        <!-- Статистика по месяцам будет здесь -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Статистика по проектам -->
+            <div class="stats-content" id="stats-projects">
+                <div class="stats-section">
+                    <h2>Статистика по проектам</h2>
+                    <div class="project-stats-section" id="projectsStats">
+                        <!-- Статистика по проектам будет здесь -->
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
     
     <!-- Модальные окна -->
     <div class="modal" id="dateModal">
-        <!-- ... -->
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title" id="modalDateTitle">Выберите действие</div>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div id="modalDateInfo"></div>
+            <div class="modal-actions">
+                <button class="action-btn btn-work" data-action="work">Отметить как рабочий день</button>
+                <button class="action-btn btn-vacation" data-action="vacation">Отметить как отпуск</button>
+                <button class="action-btn btn-sick" data-action="sick">Отметить как больничный</button>
+                <button class="action-btn btn-remove" data-action="remove">Удалить отметку</button>
+            </div>
+        </div>
     </div>
     
-    <!-- Уведомления -->
+    <div class="modal" id="editProjectModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Редактирование проекта</div>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="form-group">
+                <label for="editProjectName">Название проекта:</label>
+                <input type="text" id="editProjectName">
+            </div>
+            <div class="form-group">
+                <label for="editStartDate">Дата начала работы:</label>
+                <input type="date" id="editStartDate">
+            </div>
+            <div class="form-group">
+                <label for="editWorkHours">Рабочий день (часов):</label>
+                <input type="number" id="editWorkHours" min="1" max="24" value="8">
+            </div>
+            <div class="form-group">
+                <label for="editEndDate">Предполагаемая дата окончания:</label>
+                <input type="date" id="editEndDate">
+            </div>
+            <div class="form-group">
+                <label for="editHourlyRate">Часовая ставка (руб/час):</label>
+                <input type="number" id="editHourlyRate" min="1" value="500">
+            </div>
+            
+            <div class="auto-fill-section">
+                <h3>Автозаполнение рабочих дней</h3>
+                <div class="auto-fill-options">
+                    <button id="autoFillWeekdays" class="auto-fill-btn">Заполнить рабочие дни</button>
+                    <button id="autoFillCustom" class="auto-fill-btn">Выборочное заполнение</button>
+                </div>
+                
+                <div class="auto-fill-toggle">
+                    <input type="checkbox" id="autoFillEnabled">
+                    <label for="autoFillEnabled" class="toggle-label">Автоматическое заполнение рабочих дней</label>
+                </div>
+                
+                <div class="auto-fill-status" id="autoFillStatus">
+                    <div class="status-indicator status-inactive"></div>
+                    <span>Автозаполнение отключено</span>
+                </div>
+            </div>
+            
+            <div class="modal-actions">
+                <button id="saveProject" class="action-btn">Сохранить изменения</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal" id="autoFillModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Автозаполнение рабочих дней</div>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="form-group">
+                <label for="autoStartDate">Дата начала:</label>
+                <input type="date" id="autoStartDate">
+            </div>
+            <div class="form-group">
+                <label for="autoEndDate">Дата окончания:</label>
+                <input type="date" id="autoEndDate">
+            </div>
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="excludeWeekends" checked> Исключить выходные
+                </label>
+            </div>
+            <button id="applyAutoFill" class="action-btn">Применить автозаполнение</button>
+        </div>
+    </div>
+    
     <div class="notification" id="notification"></div>
 
-    <!-- Нижнее меню -->
     <div class="mobile-bottom-nav">
-        <!-- ... -->
+        <div class="nav-item active" data-tab="main">
+            <i class="fas fa-home nav-icon"></i>
+            <span>Главная</span>
+        </div>
+        <div class="nav-item" data-tab="projects">
+            <i class="fas fa-project-diagram nav-icon"></i>
+            <span>Проекты</span>
+        </div>
+        <div class="nav-item" data-tab="stats">
+            <i class="fas fa-chart-bar nav-icon"></i>
+            <span>Статистика</span>
+        </div>
     </div>
 
     <script>
-        // Service Worker регистрация - ДОБАВЬ ЭТО В НАЧАЛО СКРИПТА
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', function() {
-                navigator.serviceWorker.register('/sw.js')
-                    .then(function(registration) {
-                        console.log('Приложение готово к работе офлайн!');
-                    })
-                    .catch(function(error) {
-                        console.log('Офлайн режим не доступен: ', error);
-                    });
-            });
-        }
+        // УБРАЛ SERVICE WORKER ДЛЯ УСТРАНЕНИЯ ПРОБЛЕМЫ
         
-        // ДОБАВЬ ЭТИ ФУНКЦИИ ДЛЯ PWA
         // Проверка онлайн/офлайн статуса
         window.addEventListener('online', function() {
             showNotification('Соединение восстановлено', 'success');
@@ -95,9 +1017,8 @@
         if (!navigator.onLine) {
             showNotification('Работа в офлайн-режиме', 'warning');
         }
-        
-        // А ЗДЕСЬ ДАЛЬШЕ ИДЕТ ТВОЙ ОСНОВНОЙ JAVASCRIPT КОД
-        // Основные переменные
+
+        // ОСНОВНОЙ КОД ПРИЛОЖЕНИЯ
         let currentDate = new Date();
         let workData = JSON.parse(localStorage.getItem('workData')) || {
             projects: {
@@ -107,17 +1028,4 @@
                     workHours: 8,
                     endDate: '',
                     hourlyRate: 500,
-                    workDays: {},
-                    autoFillEnabled: false,
-                    lastAutoFill: null
-                }
-            },
-            currentProject: 'default',
-            theme: 'light'
-        };
-        
-        // ... и весь остальной твой JavaScript код ...
-        
-    </script>
-</body>
-</html>
+                    work
