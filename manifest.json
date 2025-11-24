@@ -3,7 +3,7 @@
   "short_name": "Табель",
   "description": "Приложение для ведения рабочего табеля",
   "lang": "ru-RU",
-  "start_url": "/work-timesheet/",
+  "start_url": "./",
   "display": "standalone",
   "theme_color": "#3498db",
   "background_color": "#ffffff",
