@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Рабочий табель</title>
     
-    <!-- PWA настройки -->
+    <!-- Настройки для iPhone -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Рабочий табель">
@@ -14,13 +14,13 @@
     
     <!-- Иконки -->
     <link rel="apple-touch-icon" href="icons/icon-192.png">
+    
+    <!-- Файл настроек приложения -->
     <link rel="manifest" href="manifest.json">
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
     <style>
         /* ВСТАВЬ СЮДА ВЕСЬ CSS КОД ИЗ ПРЕДЫДУЩЕЙ ВЕРСИИ */
-        /* Тот же самый CSS что был раньше */
         * {
             box-sizing: border-box;
             margin: 0;
@@ -766,7 +766,7 @@
                 </div>
             </div>
             
-            <!-- Информация о проекте -->
+            <!-- Информация о проекте перемещена вниз -->
             <div class="form-section" id="projectInfo">
                 <!-- Информация о проекте будет здесь -->
             </div>
@@ -1002,20 +1002,16 @@
     </div>
 
     <script>
-        // ==================== ГИБРИДНЫЙ ПОДХОД ====================
-        // 1. Надежное автосохранение в localStorage
-        // 2. Упрощенный Service Worker для офлайн-доступа
-        
         // ==================== SERVICE WORKER РЕГИСТРАЦИЯ ====================
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', function() {
-                navigator.serviceWorker.register('/work-timesheet/sw.js')
+                // ИСПРАВЛЕННЫЙ ПУТЬ - используем относительный путь
+                navigator.serviceWorker.register('sw.js')
                     .then(function(registration) {
-                        console.log('✅ Service Worker зарегистрирован для офлайн-работы');
+                        console.log('✅ Service Worker зарегистрирован: ', registration.scope);
                     })
                     .catch(function(error) {
-                        console.log('❌ Service Worker не зарегистрирован:', error);
-                        // Приложение продолжит работать без Service Worker
+                        console.log('❌ Ошибка регистрации ServiceWorker: ', error);
                     });
             });
         }
@@ -1083,16 +1079,6 @@
         function updateOnlineStatus() {
             if (navigator.onLine) {
                 showNotification('Соединение восстановлено', 'success');
-                // При восстановлении связи перезагружаем данные на всякий случай
-                setTimeout(() => {
-                    const freshData = loadFromStorage();
-                    if (JSON.stringify(freshData) !== JSON.stringify(workData)) {
-                        workData = freshData;
-                        renderCalendar();
-                        updateStats();
-                        showNotification('Данные синхронизированы', 'success');
-                    }
-                }, 1000);
             } else {
                 showNotification('Работа в офлайн-режиме. Данные сохраняются локально.', 'warning');
             }
@@ -1928,30 +1914,62 @@
                 
                 const projectStatCard = document.createElement('div');
                 projectStatCard.className = 'project-stat-card';
-        projectStatCard.innerHTML = `
-            <div class="project-stat-header">
-                <div class="project-stat-name">${project.name}</div>
-                <div class="project-stat-period">За все время</div>
-            </div>
-            <div class="project-stats-grid">
-                <div class="stat-card">
-                    <div class="stat-value">${stats.days}</div>
-                    <div class="stat-label">Отработано дней</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value">${stats.hours}</div>
-                    <div class="stat-label">Отработано часов</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value">${stats.earned.toLocaleString()} руб</div>
-                    <div class="stat-label">Заработано</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value">${stats.vacationDays + stats.sickDays}</div>
-                    <div class="stat-label">Нерабочих дней</div>
-                </div>
-            </div>
-        `;
-        projectsStatsElement.appendChild(projectStatCard);
-    }
-}
+                projectStatCard.innerHTML = `
+                    <div class="project-stat-header">
+                        <div class="project-stat-name">${project.name}</div>
+                        <div class="project-stat-period">За все время</div>
+                    </div>
+                    <div class="project-stats-grid">
+                        <div class="stat-card"><div class="stat-value">${stats.days}</div><div class="stat-label">Отработано дней</div></div>
+                        <div class="stat-card"><div class="stat-value">${stats.hours}</div><div class="stat-label">Отработано часов</div></div>
+                        <div class="stat-card"><div class="stat-value">${stats.earned.toLocaleString()} руб</div><div class="stat-label">Заработано</div></div>
+                        <div class="stat-card"><div class="stat-value">${stats.vacationDays + stats.sickDays}</div><div class="stat-label">Нерабочих дней</div></div>
+                    </div>
+                `;
+                projectsStatsElement.appendChild(projectStatCard);
+            }
+        }
+        
+        function checkNotifications() {
+            const currentProject = workData.projects[workData.currentProject];
+            if (currentProject.endDate) {
+                const endDate = new Date(currentProject.endDate);
+                const today = new Date();
+                const timeDiff = endDate.getTime() - today.getTime();
+                const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
+                if (daysDiff <= 7 && daysDiff > 0) {
+                    showNotification(`До окончания проекта осталось ${daysDiff} дней`, 'warning');
+                }
+            }
+            
+            const stats = calculateProjectStats(workData.currentProject);
+            if (stats.overtime > 10) {
+                showNotification(`В этом месяце переработка: ${stats.overtime} часов`, 'warning');
+            }
+        }
+        
+        function showNotification(message, type = 'success') {
+            notificationElement.textContent = message;
+            notificationElement.className = 'notification ' + (type === 'error' ? 'error' : type === 'warning' ? 'warning' : '');
+            notificationElement.style.display = 'block';
+            setTimeout(() => { notificationElement.style.display = 'none'; }, 5000);
+        }
+        
+        function formatDate(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+        
+        function formatDateDisplay(date) {
+            const options = { day: 'numeric', month: 'long', year: 'numeric', weekday: 'long' };
+            return date.toLocaleDateString('ru-RU', options);
+        }
+        
+        // Запуск приложения
+        init();
+        setInterval(checkAutoFill, 10000);
+    </script>
+</body>
+</html>
