@@ -1024,18 +1024,46 @@
 
     <script>
         // ==================== SERVICE WORKER РЕГИСТРАЦИЯ ====================
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', function() {
-                // ИСПРАВЛЕННЫЙ ПУТЬ - используем относительный путь
-                navigator.serviceWorker.register('sw.js')
-                    .then(function(registration) {
-                        console.log('✅ Service Worker зарегистрирован: ', registration.scope);
-                    })
-                    .catch(function(error) {
-                        console.log('❌ Ошибка регистрации ServiceWorker: ', error);
+        // Service Worker регистрация - УЛУЧШЕННАЯ ВЕРСИЯ
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function() {
+        const swUrl = '/work-timesheet/sw.js';
+        
+        navigator.serviceWorker.register(swUrl)
+            .then(function(registration) {
+                console.log('✅ Service Worker зарегистрирован: ', registration.scope);
+                
+                // Проверяем готовность к офлайн-работе
+                registration.addEventListener('updatefound', function() {
+                    const newWorker = registration.installing;
+                    console.log('🔄 Обновление Service Worker:', newWorker.state);
+                    
+                    newWorker.addEventListener('statechange', function() {
+                        console.log('📱 Состояние Service Worker:', newWorker.state);
+                        if (newWorker.state === 'activated') {
+                            console.log('🎉 Service Worker готов к офлайн-работе!');
+                        }
                     });
+                });
+            })
+            .catch(function(error) {
+                console.log('❌ Ошибка регистрации Service Worker:', error);
             });
-        }
+    });
+}
+
+        // Проверка офлайн-режима при загрузке
+window.addEventListener('load', function() {
+    if (!navigator.onLine) {
+        console.log('📱 Приложение запущено в офлайн-режиме');
+        // Принудительно загружаем данные
+        setTimeout(function() {
+            if (typeof init === 'function') {
+                init();
+            }
+        }, 1000);
+    }
+});
 
         // ==================== НАДЕЖНОЕ АВТОСОХРАНЕНИЕ ====================
         let workData = loadFromStorage();
