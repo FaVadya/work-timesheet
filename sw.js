@@ -1,27 +1,25 @@
 // Service Worker для полного офлайн-режима
-const CACHE_NAME = 'work-timesheet-v1.3';
+const CACHE_NAME = 'work-timesheet-offline-v2';
 const urlsToCache = [
-  './',
-  './index.html',
-  './manifest.json'
+  '/work-timesheet/',
+  '/work-timesheet/index.html',
+  '/work-timesheet/manifest.json'
 ];
 
-// Установка Service Worker
 self.addEventListener('install', function(event) {
-  console.log('🚀 Service Worker: Устанавливаем для офлайн-работы...');
+  console.log('🚀 Устанавливаем Service Worker для офлайн-работы');
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(function(cache) {
-        console.log('✅ Service Worker: Кешируем основные файлы');
+        console.log('✅ Кешируем основные файлы');
         return cache.addAll(urlsToCache);
       })
       .then(() => self.skipWaiting())
   );
 });
 
-// Активация
 self.addEventListener('activate', function(event) {
-  console.log('🔧 Service Worker: Активируем...');
+  console.log('🔧 Активируем Service Worker');
   event.waitUntil(
     caches.keys().then(function(cacheNames) {
       return Promise.all(
@@ -36,42 +34,43 @@ self.addEventListener('activate', function(event) {
   );
 });
 
-// Обработка запросов - УПРОЩЕННАЯ ВЕРСИЯ
 self.addEventListener('fetch', function(event) {
-  // Для всех запросов - сначала кеш, потом сеть
+  // Для GitHub Pages - особенная обработка
+  if (event.request.url.includes('github.io')) {
+    event.respondWith(
+      caches.match(event.request)
+        .then(function(response) {
+          // Если есть в кеше - возвращаем
+          if (response) {
+            return response;
+          }
+          
+          // Иначе пробуем сеть
+          return fetch(event.request)
+            .then(function(networkResponse) {
+              // Кешируем успешные ответы
+              if (networkResponse && networkResponse.status === 200) {
+                const responseToCache = networkResponse.clone();
+                caches.open(CACHE_NAME)
+                  .then(function(cache) {
+                    cache.put(event.request, responseToCache);
+                  });
+              }
+              return networkResponse;
+            })
+            .catch(function() {
+              // В офлайне возвращаем главную страницу
+              return caches.match('/work-timesheet/index.html');
+            });
+        })
+    );
+    return;
+  }
+  
+  // Для остальных запросов
   event.respondWith(
-    caches.match(event.request)
-      .then(function(response) {
-        // Возвращаем из кеша если есть
-        if (response) {
-          return response;
-        }
-        
-        // Иначе загружаем из сети
-        return fetch(event.request)
-          .then(function(networkResponse) {
-            // Кешируем только локальные файлы
-            if (networkResponse.ok && event.request.url.startsWith('http')) {
-              const responseToCache = networkResponse.clone();
-              caches.open(CACHE_NAME)
-                .then(function(cache) {
-                  cache.put(event.request, responseToCache);
-                });
-            }
-            return networkResponse;
-          })
-          .catch(function() {
-            // Fallback для HTML-страниц
-            if (event.request.destination === 'document') {
-              return caches.match('./index.html');
-            }
-            // Для CSS возвращаем пустой стиль
-            if (event.request.url.includes('.css')) {
-              return new Response('', { 
-                headers: { 'Content-Type': 'text/css' } 
-              });
-            }
-          });
-      })
+    fetch(event.request).catch(function() {
+      return caches.match(event.request);
+    })
   );
 });
