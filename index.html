@@ -12,7 +12,9 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#3498db">
     
-    <!-- Иконки -->
+    <!-- Иконки для iOS -->
+    <link rel="apple-touch-icon" sizes="192x192" href="icons/icon-192.png">
+    <link rel="apple-touch-icon" sizes="512x512" href="icons/icon-512.png">
     <link rel="apple-touch-icon" href="icons/icon-192.png">
     
     <!-- Файл настроек приложения -->
@@ -671,28 +673,7 @@
                 max-width: 750px;
                 padding: 20px;
             }
-            /* ==================== ЛОКАЛЬНЫЕ ИКОНКИ ДЛЯ ОФЛАЙН-РЕЖИМА ==================== */
-.fa-home::before { content: "🏠"; }
-.fa-project-diagram::before { content: "📊"; }
-.fa-chart-bar::before { content: "📈"; }
-.fa-moon::before { content: "🌙"; }
-.fa-sun::before { content: "☀️"; }
-.fa-chevron-left::before { content: "◀"; }
-.fa-chevron-right::before { content: "▶"; }
-.fa-plus::before { content: "➕"; }
-.fa-edit::before { content: "✏️"; }
-.fa-trash::before { content: "🗑️"; }
-.fa-save::before { content: "💾"; }
-.fa-bell::before { content: "🔔"; }
-.fa-calendar::before { content: "📅"; }
-.fa-clock::before { content: "⏰"; }
-.fa-money-bill::before { content: "💰"; }
-.fa-user::before { content: "👤"; }
-.fa-cog::before { content: "⚙️"; }
-.fa-sync::before { content: "🔄"; }
-.fa-download::before { content: "📥"; }
-.fa-upload::before { content: "📤"; }
-/* ========================================================================== */
+            
             .calendar-date {
                 height: 80px;
             }
@@ -719,6 +700,28 @@
                 max-width: 1000px;
             }
         }
+        
+        /* Фолбэк для иконок если FontAwesome не загрузится */
+        .fa-home::before { content: "🏠"; }
+        .fa-project-diagram::before { content: "📊"; }
+        .fa-chart-bar::before { content: "📈"; }
+        .fa-moon::before { content: "🌙"; }
+        .fa-sun::before { content: "☀️"; }
+        .fa-chevron-left::before { content: "◀"; }
+        .fa-chevron-right::before { content: "▶"; }
+        .fa-plus::before { content: "➕"; }
+        .fa-edit::before { content: "✏️"; }
+        .fa-trash::before { content: "🗑️"; }
+        .fa-save::before { content: "💾"; }
+        .fa-bell::before { content: "🔔"; }
+        .fa-calendar::before { content: "📅"; }
+        .fa-clock::before { content: "⏰"; }
+        .fa-money-bill::before { content: "💰"; }
+        .fa-user::before { content: "👤"; }
+        .fa-cog::before { content: "⚙️"; }
+        .fa-sync::before { content: "🔄"; }
+        .fa-download::before { content: "📥"; }
+        .fa-upload::before { content: "📤"; }
     </style>
 </head>
 <body>
@@ -1024,46 +1027,46 @@
 
     <script>
         // ==================== SERVICE WORKER РЕГИСТРАЦИЯ ====================
-        // Service Worker регистрация - УЛУЧШЕННАЯ ВЕРСИЯ
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', function() {
-        const swUrl = '/work-timesheet/sw.js';
-        
-        navigator.serviceWorker.register(swUrl)
-            .then(function(registration) {
-                console.log('✅ Service Worker зарегистрирован: ', registration.scope);
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                // Используем относительный путь для GitHub Pages
+                const swUrl = 'sw.js';
                 
-                // Проверяем готовность к офлайн-работе
-                registration.addEventListener('updatefound', function() {
-                    const newWorker = registration.installing;
-                    console.log('🔄 Обновление Service Worker:', newWorker.state);
-                    
-                    newWorker.addEventListener('statechange', function() {
-                        console.log('📱 Состояние Service Worker:', newWorker.state);
-                        if (newWorker.state === 'activated') {
-                            console.log('🎉 Service Worker готов к офлайн-работе!');
-                        }
+                navigator.serviceWorker.register(swUrl)
+                    .then(function(registration) {
+                        console.log('✅ Service Worker зарегистрирован: ', registration.scope);
+                        
+                        // Проверяем готовность к офлайн-работе
+                        registration.addEventListener('updatefound', function() {
+                            const newWorker = registration.installing;
+                            console.log('🔄 Обновление Service Worker:', newWorker.state);
+                            
+                            newWorker.addEventListener('statechange', function() {
+                                console.log('📱 Состояние Service Worker:', newWorker.state);
+                                if (newWorker.state === 'activated') {
+                                    console.log('🎉 Service Worker готов к офлайн-работе!');
+                                }
+                            });
+                        });
+                    })
+                    .catch(function(error) {
+                        console.log('❌ Ошибка регистрации Service Worker:', error);
                     });
-                });
-            })
-            .catch(function(error) {
-                console.log('❌ Ошибка регистрации Service Worker:', error);
             });
-    });
-}
+        }
 
         // Проверка офлайн-режима при загрузке
-window.addEventListener('load', function() {
-    if (!navigator.onLine) {
-        console.log('📱 Приложение запущено в офлайн-режиме');
-        // Принудительно загружаем данные
-        setTimeout(function() {
-            if (typeof init === 'function') {
-                init();
+        window.addEventListener('load', function() {
+            if (!navigator.onLine) {
+                console.log('📱 Приложение запущено в офлайн-режиме');
+                // Принудительно загружаем данные
+                setTimeout(function() {
+                    if (typeof init === 'function') {
+                        init();
+                    }
+                }, 1000);
             }
-        }, 1000);
-    }
-});
+        });
 
         // ==================== НАДЕЖНОЕ АВТОСОХРАНЕНИЕ ====================
         let workData = loadFromStorage();
