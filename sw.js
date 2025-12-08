@@ -1,5 +1,5 @@
 // Service Worker для полного офлайн-режима
-const CACHE_NAME = 'work-timesheet-offline-v3';
+const CACHE_NAME = 'work-timesheet-offline-v5'; // ИЗМЕНИЛИ ВЕРСИЮ ДЛЯ ОЧИСТКИ КЕША
 const urlsToCache = [
   './',
   './index.html',
@@ -98,30 +98,5 @@ self.addEventListener('fetch', function(event) {
             });
           });
       })
-  );
-});
-
-// Периодическая синхронизация (если поддерживается)
-self.addEventListener('sync', function(event) {
-  if (event.tag === 'sync-data') {
-    console.log('🔄 Синхронизация данных');
-  }
-});
-
-// Пуш-уведомления (если поддерживаются)
-self.addEventListener('push', function(event) {
-  const options = {
-    body: event.data ? event.data.text() : 'Новое уведомление',
-    icon: './icons/icon-192.png',
-    badge: './icons/icon-192.png',
-    vibrate: [100, 50, 100],
-    data: {
-      dateOfArrival: Date.now(),
-      primaryKey: 1
-    }
-  };
-  
-  event.waitUntil(
-    self.registration.showNotification('Рабочий табель', options)
   );
 });
