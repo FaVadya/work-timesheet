@@ -1,9 +1,11 @@
 // Service Worker для полного офлайн-режима
-const CACHE_NAME = 'work-timesheet-offline-v2';
+const CACHE_NAME = 'work-timesheet-offline-v3';
 const urlsToCache = [
-  '/work-timesheet/',
-  '/work-timesheet/index.html',
-  '/work-timesheet/manifest.json'
+  './',
+  './index.html',
+  './manifest.json',
+  './icons/icon-192.png',
+  './icons/icon-512.png'
 ];
 
 self.addEventListener('install', function(event) {
@@ -60,17 +62,66 @@ self.addEventListener('fetch', function(event) {
             })
             .catch(function() {
               // В офлайне возвращаем главную страницу
-              return caches.match('/work-timesheet/index.html');
+              return caches.match('./index.html');
             });
         })
     );
     return;
   }
   
-  // Для остальных запросов
+  // Для локальной разработки
   event.respondWith(
-    fetch(event.request).catch(function() {
-      return caches.match(event.request);
-    })
+    caches.match(event.request)
+      .then(function(response) {
+        if (response) {
+          return response;
+        }
+        return fetch(event.request)
+          .then(function(networkResponse) {
+            if (networkResponse && networkResponse.status === 200) {
+              const responseToCache = networkResponse.clone();
+              caches.open(CACHE_NAME)
+                .then(function(cache) {
+                  cache.put(event.request, responseToCache);
+                });
+            }
+            return networkResponse;
+          })
+          .catch(function() {
+            // В офлайне пытаемся вернуть что-то из кеша
+            if (event.request.destination === 'document') {
+              return caches.match('./index.html');
+            }
+            return new Response('Офлайн-режим', { 
+              status: 503, 
+              statusText: 'Service Unavailable' 
+            });
+          });
+      })
+  );
+});
+
+// Периодическая синхронизация (если поддерживается)
+self.addEventListener('sync', function(event) {
+  if (event.tag === 'sync-data') {
+    console.log('🔄 Синхронизация данных');
+  }
+});
+
+// Пуш-уведомления (если поддерживаются)
+self.addEventListener('push', function(event) {
+  const options = {
+    body: event.data ? event.data.text() : 'Новое уведомление',
+    icon: './icons/icon-192.png',
+    badge: './icons/icon-192.png',
+    vibrate: [100, 50, 100],
+    data: {
+      dateOfArrival: Date.now(),
+      primaryKey: 1
+    }
+  };
+  
+  event.waitUntil(
+    self.registration.showNotification('Рабочий табель', options)
   );
 });
