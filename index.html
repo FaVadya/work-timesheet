@@ -668,6 +668,150 @@
             gap: 10px;
         }
         
+        /* Новые стили для изменения ставок */
+        .rate-changes-section {
+            margin-top: 15px;
+            padding: 15px;
+            background-color: var(--section-bg);
+            border-radius: 8px;
+        }
+        
+        .rate-changes-list {
+            margin-top: 10px;
+        }
+        
+        .rate-change-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px;
+            background-color: var(--card-bg);
+            margin-bottom: 5px;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+        }
+        
+        .rate-change-date {
+            font-size: 0.8rem;
+            color: var(--gray);
+        }
+        
+        .rate-change-rate {
+            font-weight: bold;
+            color: var(--success);
+        }
+        
+        .rate-change-actions {
+            display: flex;
+            gap: 5px;
+        }
+        
+        /* Стили для шаблонного заполнения */
+        .template-fill-section {
+            margin-top: 15px;
+            padding: 15px;
+            background-color: var(--section-bg);
+            border-radius: 8px;
+        }
+        
+        .template-options {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .template-btn {
+            padding: 10px;
+            font-size: 0.9rem;
+        }
+        
+        /* Стили для реального времени */
+        .real-time-widget {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+        }
+        
+        .real-time-title {
+            font-size: 1rem;
+            margin-bottom: 10px;
+            opacity: 0.9;
+        }
+        
+        .real-time-clock {
+            font-size: 2.5rem;
+            font-weight: bold;
+            font-family: 'Courier New', monospace;
+            letter-spacing: 2px;
+            margin-bottom: 5px;
+        }
+        
+        .real-time-earned {
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .real-time-status {
+            font-size: 0.8rem;
+            opacity: 0.8;
+        }
+        
+        /* Стили для вкладок в модальном окне */
+        .modal-tabs {
+            display: flex;
+            margin-bottom: 15px;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .modal-tab {
+            padding: 8px 15px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            color: var(--text-color);
+        }
+        
+        .modal-tab.active {
+            border-bottom-color: var(--primary);
+            color: var(--primary);
+            font-weight: bold;
+        }
+        
+        .modal-tab-content {
+            display: none;
+        }
+        
+        .modal-tab-content.active {
+            display: block;
+        }
+        
+        /* Стили для времени работы */
+        .time-inputs {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .time-input-group {
+            margin-bottom: 10px;
+        }
+        
+        .time-input-group label {
+            font-size: 0.8rem;
+            margin-bottom: 3px;
+        }
+        
+        .time-input-group input {
+            padding: 8px;
+            font-size: 0.9rem;
+        }
+        
         @media (min-width: 768px) {
             .container {
                 max-width: 750px;
@@ -693,11 +837,27 @@
             .project-stats-grid {
                 grid-template-columns: repeat(4, 1fr);
             }
+            
+            .template-options {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            
+            .time-inputs {
+                grid-template-columns: repeat(4, 1fr);
+            }
         }
         
         @media (min-width: 992px) {
             .container {
                 max-width: 1000px;
+            }
+            
+            .real-time-clock {
+                font-size: 3rem;
+            }
+            
+            .real-time-earned {
+                font-size: 2.2rem;
             }
         }
         
@@ -722,6 +882,9 @@
         .fa-sync::before { content: "🔄"; }
         .fa-download::before { content: "📥"; }
         .fa-upload::before { content: "📤"; }
+        .fa-history::before { content: "📅"; }
+        .fa-templates::before { content: "📋"; }
+        .fa-stopwatch::before { content: "⏱️"; }
     </style>
 </head>
 <body>
@@ -731,6 +894,14 @@
             <button class="theme-toggle" id="themeToggle">
                 <i class="fas fa-moon"></i>
             </button>
+        </div>
+        
+        <!-- Виджет реального времени -->
+        <div class="real-time-widget" id="realTimeWidget">
+            <div class="real-time-title">СЕЙЧАС ЗАРАБАТЫВАЕТЕ</div>
+            <div class="real-time-clock" id="realTimeClock">00:00:00</div>
+            <div class="real-time-earned" id="realTimeEarned">0.00 руб</div>
+            <div class="real-time-status" id="realTimeStatus">Сегодня не рабочий день</div>
         </div>
         
         <div class="tabs">
@@ -754,6 +925,16 @@
                     <select id="projectSelect">
                         <option value="default">Основной проект</option>
                     </select>
+                </div>
+            </div>
+            
+            <!-- Шаблонное заполнение -->
+            <div class="template-fill-section">
+                <h2>Шаблонное заполнение</h2>
+                <div class="template-options">
+                    <button id="fillWorkWeek" class="template-btn">Заполнить рабочую неделю</button>
+                    <button id="fillCustomRange" class="template-btn">Заполнить диапазон</button>
+                    <button id="fillByTemplate" class="template-btn">Заполнить по шаблону</button>
                 </div>
             </div>
             
@@ -790,7 +971,7 @@
                 </div>
             </div>
             
-            <!-- Информация о проекте перемещена вниз -->
+            <!-- Информация о проекте -->
             <div class="form-section" id="projectInfo">
                 <!-- Информация о проекте будет здесь -->
             </div>
@@ -819,6 +1000,7 @@
                 <div class="stats-tab" data-stats-tab="period">Выбранный период</div>
                 <div class="stats-tab" data-stats-tab="total">За все время</div>
                 <div class="stats-tab" data-stats-tab="projects">По проектам</div>
+                <div class="stats-tab" data-stats-tab="realtime">В реальном времени</div>
             </div>
             
             <!-- Статистика за текущий месяц -->
@@ -914,6 +1096,31 @@
                     </div>
                 </div>
             </div>
+            
+            <!-- Статистика в реальном времени -->
+            <div class="stats-content" id="stats-realtime">
+                <div class="stats-section">
+                    <h2>Статистика в реальном времени</h2>
+                    <div class="form-section">
+                        <div class="form-group">
+                            <label>Текущая ставка:</label>
+                            <div class="stat-value" id="currentRate">0 руб/час</div>
+                        </div>
+                        <div class="form-group">
+                            <label>Рабочее время сегодня:</label>
+                            <div class="stat-value" id="workTimeToday">0 ч 0 мин</div>
+                        </div>
+                        <div class="form-group">
+                            <label>Заработано сегодня:</label>
+                            <div class="stat-value" id="earnedToday">0 руб</div>
+                        </div>
+                        <div class="form-group">
+                            <label>Следующее изменение ставки:</label>
+                            <div class="stat-value" id="nextRateChange">Нет запланированных изменений</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
     
@@ -940,42 +1147,106 @@
                 <div class="modal-title">Редактирование проекта</div>
                 <button class="close-modal">&times;</button>
             </div>
-            <div class="form-group">
-                <label for="editProjectName">Название проекта:</label>
-                <input type="text" id="editProjectName">
-            </div>
-            <div class="form-group">
-                <label for="editStartDate">Дата начала работы:</label>
-                <input type="date" id="editStartDate">
-            </div>
-            <div class="form-group">
-                <label for="editWorkHours">Рабочий день (часов):</label>
-                <input type="number" id="editWorkHours" min="1" max="24" value="8">
-            </div>
-            <div class="form-group">
-                <label for="editEndDate">Предполагаемая дата окончания:</label>
-                <input type="date" id="editEndDate">
-            </div>
-            <div class="form-group">
-                <label for="editHourlyRate">Часовая ставка (руб/час):</label>
-                <input type="number" id="editHourlyRate" min="1" value="500">
+            
+            <div class="modal-tabs">
+                <div class="modal-tab active" data-modal-tab="main">Основные настройки</div>
+                <div class="modal-tab" data-modal-tab="rate">Изменения ставок</div>
+                <div class="modal-tab" data-modal-tab="time">Время работы</div>
             </div>
             
-            <div class="auto-fill-section">
-                <h3>Автозаполнение рабочих дней</h3>
-                <div class="auto-fill-options">
-                    <button id="autoFillWeekdays" class="auto-fill-btn">Заполнить рабочие дни</button>
-                    <button id="autoFillCustom" class="auto-fill-btn">Выборочное заполнение</button>
+            <!-- Основные настройки -->
+            <div class="modal-tab-content active" id="modalTabMain">
+                <div class="form-group">
+                    <label for="editProjectName">Название проекта:</label>
+                    <input type="text" id="editProjectName">
+                </div>
+                <div class="form-group">
+                    <label for="editStartDate">Дата начала работы:</label>
+                    <input type="date" id="editStartDate">
+                </div>
+                <div class="form-group">
+                    <label for="editWorkHours">Рабочий день (часов):</label>
+                    <input type="number" id="editWorkHours" min="1" max="24" value="8">
+                </div>
+                <div class="form-group">
+                    <label for="editEndDate">Предполагаемая дата окончания:</label>
+                    <input type="date" id="editEndDate">
+                </div>
+                <div class="form-group">
+                    <label for="editBaseHourlyRate">Базовая часовая ставка (руб/час):</label>
+                    <input type="number" id="editBaseHourlyRate" min="1" value="500">
                 </div>
                 
-                <div class="auto-fill-toggle">
-                    <input type="checkbox" id="autoFillEnabled">
-                    <label for="autoFillEnabled" class="toggle-label">Автоматическое заполнение рабочих дней</label>
+                <div class="auto-fill-section">
+                    <h3>Автозаполнение рабочих дней</h3>
+                    <div class="auto-fill-options">
+                        <button id="autoFillWeekdays" class="auto-fill-btn">Заполнить рабочие дни</button>
+                        <button id="autoFillCustom" class="auto-fill-btn">Выборочное заполнение</button>
+                    </div>
+                    
+                    <div class="auto-fill-toggle">
+                        <input type="checkbox" id="autoFillEnabled">
+                        <label for="autoFillEnabled" class="toggle-label">Автоматическое заполнение рабочих дней</label>
+                    </div>
+                    
+                    <div class="auto-fill-status" id="autoFillStatus">
+                        <div class="status-indicator status-inactive"></div>
+                        <span>Автозаполнение отключено</span>
+                    </div>
                 </div>
-                
-                <div class="auto-fill-status" id="autoFillStatus">
-                    <div class="status-indicator status-inactive"></div>
-                    <span>Автозаполнение отключено</span>
+            </div>
+            
+            <!-- Изменения ставок -->
+            <div class="modal-tab-content" id="modalTabRate">
+                <div class="rate-changes-section">
+                    <h3>История изменения ставок</h3>
+                    <div class="form-group">
+                        <label>Добавить изменение ставки:</label>
+                        <div class="time-inputs">
+                            <div class="time-input-group">
+                                <label for="newRateDate">Дата изменения:</label>
+                                <input type="date" id="newRateDate">
+                            </div>
+                            <div class="time-input-group">
+                                <label for="newRateValue">Новая ставка (руб/час):</label>
+                                <input type="number" id="newRateValue" min="1" value="500">
+                            </div>
+                        </div>
+                        <button id="addRateChange" class="btn-sm" style="margin-top: 10px;">Добавить изменение</button>
+                    </div>
+                    
+                    <div class="rate-changes-list" id="rateChangesList">
+                        <!-- Список изменений ставок будет здесь -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Время работы -->
+            <div class="modal-tab-content" id="modalTabTime">
+                <div class="form-section">
+                    <h3>Настройка рабочего времени</h3>
+                    <div class="time-inputs">
+                        <div class="time-input-group">
+                            <label for="editWorkStart">Начало работы:</label>
+                            <input type="time" id="editWorkStart" value="09:00">
+                        </div>
+                        <div class="time-input-group">
+                            <label for="editWorkEnd">Окончание работы:</label>
+                            <input type="time" id="editWorkEnd" value="18:00">
+                        </div>
+                        <div class="time-input-group">
+                            <label for="editLunchStart">Начало обеда:</label>
+                            <input type="time" id="editLunchStart" value="13:00">
+                        </div>
+                        <div class="time-input-group">
+                            <label for="editLunchEnd">Окончание обеда:</label>
+                            <input type="time" id="editLunchEnd" value="14:00">
+                        </div>
+                    </div>
+                    <div class="form-group" style="margin-top: 15px;">
+                        <label>Чистое рабочее время в день:</label>
+                        <div class="stat-value" id="netWorkTime">8 часов</div>
+                    </div>
                 </div>
             </div>
             
@@ -985,6 +1256,7 @@
         </div>
     </div>
     
+    <!-- Модальное окно для автозаполнения -->
     <div class="modal" id="autoFillModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -1005,6 +1277,42 @@
                 </label>
             </div>
             <button id="applyAutoFill" class="action-btn">Применить автозаполнение</button>
+        </div>
+    </div>
+    
+    <!-- Модальное окно для шаблонного заполнения -->
+    <div class="modal" id="templateFillModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Шаблонное заполнение дней</div>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="form-group">
+                <label for="templateStartDate">Дата начала:</label>
+                <input type="date" id="templateStartDate">
+            </div>
+            <div class="form-group">
+                <label for="templateEndDate">Дата окончания:</label>
+                <input type="date" id="templateEndDate">
+            </div>
+            <div class="form-group">
+                <label for="templateType">Тип дней:</label>
+                <select id="templateType">
+                    <option value="work">Рабочие дни</option>
+                    <option value="vacation">Отпуск</option>
+                    <option value="sick">Больничный</option>
+                </select>
+            </div>
+            <div class="form-group" id="templateWorkOptions">
+                <label for="templateHours">Количество часов в день:</label>
+                <input type="number" id="templateHours" min="1" max="24" value="8">
+                <div style="margin-top: 10px;">
+                    <label>
+                        <input type="checkbox" id="templateExcludeWeekends" checked> Исключить выходные
+                    </label>
+                </div>
+            </div>
+            <button id="applyTemplateFill" class="action-btn">Применить шаблон</button>
         </div>
     </div>
     
@@ -1029,14 +1337,12 @@
         // ==================== SERVICE WORKER РЕГИСТРАЦИЯ ====================
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', function() {
-                // Используем относительный путь для GitHub Pages
                 const swUrl = 'sw.js';
                 
                 navigator.serviceWorker.register(swUrl)
                     .then(function(registration) {
                         console.log('✅ Service Worker зарегистрирован: ', registration.scope);
                         
-                        // Проверяем готовность к офлайн-работе
                         registration.addEventListener('updatefound', function() {
                             const newWorker = registration.installing;
                             console.log('🔄 Обновление Service Worker:', newWorker.state);
@@ -1055,21 +1361,9 @@
             });
         }
 
-        // Проверка офлайн-режима при загрузке
-        window.addEventListener('load', function() {
-            if (!navigator.onLine) {
-                console.log('📱 Приложение запущено в офлайн-режиме');
-                // Принудительно загружаем данные
-                setTimeout(function() {
-                    if (typeof init === 'function') {
-                        init();
-                    }
-                }, 1000);
-            }
-        });
-
         // ==================== НАДЕЖНОЕ АВТОСОХРАНЕНИЕ ====================
         let workData = loadFromStorage();
+        let realTimeInterval = null;
         
         function loadFromStorage() {
             try {
@@ -1091,10 +1385,15 @@
                         startDate: '',
                         workHours: 8,
                         endDate: '',
-                        hourlyRate: 500,
+                        baseHourlyRate: 500,
+                        rateChanges: [], // Массив изменений ставок
                         workDays: {},
                         autoFillEnabled: false,
-                        lastAutoFill: null
+                        lastAutoFill: null,
+                        workStartTime: '09:00',
+                        workEndTime: '18:00',
+                        lunchStartTime: '13:00',
+                        lunchEndTime: '14:00'
                     }
                 },
                 currentProject: 'default',
@@ -1120,7 +1419,6 @@
         // Сохранение при закрытии страницы
         window.addEventListener('beforeunload', saveToStorage);
         
-        // Сохранение при изменении видимости страницы
         document.addEventListener('visibilitychange', function() {
             if (document.visibilityState === 'hidden') {
                 saveToStorage();
@@ -1139,7 +1437,6 @@
         window.addEventListener('online', updateOnlineStatus);
         window.addEventListener('offline', updateOnlineStatus);
 
-        // Проверяем статус при загрузке
         if (!navigator.onLine) {
             showNotification('Работа в офлайн-режиме. Данные сохраняются локально.', 'warning');
         }
@@ -1176,7 +1473,7 @@
         const editStartDateInput = document.getElementById('editStartDate');
         const editWorkHoursInput = document.getElementById('editWorkHours');
         const editEndDateInput = document.getElementById('editEndDate');
-        const editHourlyRateInput = document.getElementById('editHourlyRate');
+        const editBaseHourlyRateInput = document.getElementById('editBaseHourlyRate');
         const autoFillEnabledCheckbox = document.getElementById('autoFillEnabled');
         const autoFillStatusElement = document.getElementById('autoFillStatus');
         const saveProjectBtn = document.getElementById('saveProject');
@@ -1200,6 +1497,42 @@
         const monthlyStatsElement = document.getElementById('monthlyStats');
         const projectsStatsElement = document.getElementById('projectsStats');
         
+        // Новые элементы для изменения ставок
+        const newRateDateInput = document.getElementById('newRateDate');
+        const newRateValueInput = document.getElementById('newRateValue');
+        const addRateChangeBtn = document.getElementById('addRateChange');
+        const rateChangesListElement = document.getElementById('rateChangesList');
+        
+        // Новые элементы для времени работы
+        const editWorkStartInput = document.getElementById('editWorkStart');
+        const editWorkEndInput = document.getElementById('editWorkEnd');
+        const editLunchStartInput = document.getElementById('editLunchStart');
+        const editLunchEndInput = document.getElementById('editLunchEnd');
+        const netWorkTimeElement = document.getElementById('netWorkTime');
+        
+        // Новые элементы для шаблонного заполнения
+        const fillWorkWeekBtn = document.getElementById('fillWorkWeek');
+        const fillCustomRangeBtn = document.getElementById('fillCustomRange');
+        const fillByTemplateBtn = document.getElementById('fillByTemplate');
+        const templateFillModal = document.getElementById('templateFillModal');
+        const templateStartDateInput = document.getElementById('templateStartDate');
+        const templateEndDateInput = document.getElementById('templateEndDate');
+        const templateTypeSelect = document.getElementById('templateType');
+        const templateHoursInput = document.getElementById('templateHours');
+        const templateExcludeWeekendsCheckbox = document.getElementById('templateExcludeWeekends');
+        const applyTemplateFillBtn = document.getElementById('applyTemplateFill');
+        const templateWorkOptions = document.getElementById('templateWorkOptions');
+        
+        // Новые элементы для реального времени
+        const realTimeClockElement = document.getElementById('realTimeClock');
+        const realTimeEarnedElement = document.getElementById('realTimeEarned');
+        const realTimeStatusElement = document.getElementById('realTimeStatus');
+        const realTimeWidget = document.getElementById('realTimeWidget');
+        const currentRateElement = document.getElementById('currentRate');
+        const workTimeTodayElement = document.getElementById('workTimeToday');
+        const earnedTodayElement = document.getElementById('earnedToday');
+        const nextRateChangeElement = document.getElementById('nextRateChange');
+        
         // Инициализация
         function init() {
             applyTheme(workData.theme);
@@ -1213,21 +1546,23 @@
             autoEndDateInput.value = formatDate(today);
             periodStartDateInput.value = formatDate(firstDay);
             periodEndDateInput.value = formatDate(today);
+            templateStartDateInput.value = formatDate(firstDay);
+            templateEndDateInput.value = formatDate(today);
+            newRateDateInput.value = formatDate(today);
             
             renderCalendar();
             updateStats();
             initTabs();
             initStatsTabs();
-            checkNotifications();
             initModals();
             checkAutoFill();
             loadTotalStats();
             loadMonthlyStats();
             loadProjectsStats();
+            startRealTimeUpdates();
+            updateRealTimeStats();
             
             console.log('🚀 Приложение инициализировано');
-            console.log('💾 Данные в localStorage:', localStorage.getItem('workData') !== null);
-            console.log('📡 Online статус:', navigator.onLine);
         }
         
         function applyTheme(theme) {
@@ -1288,6 +1623,8 @@
                         loadProjectsStats();
                     } else if (statsTabId === 'period') {
                         loadPeriodStats();
+                    } else if (statsTabId === 'realtime') {
+                        updateRealTimeStats();
                     }
                 });
             });
@@ -1298,11 +1635,13 @@
         }
         
         function initModals() {
+            // Закрытие модальных окон
             document.querySelectorAll('.close-modal').forEach(btn => {
                 btn.addEventListener('click', function() {
                     dateModal.style.display = 'none';
                     editProjectModal.style.display = 'none';
                     autoFillModal.style.display = 'none';
+                    templateFillModal.style.display = 'none';
                 });
             });
             
@@ -1310,8 +1649,10 @@
                 if (event.target === dateModal) dateModal.style.display = 'none';
                 if (event.target === editProjectModal) editProjectModal.style.display = 'none';
                 if (event.target === autoFillModal) autoFillModal.style.display = 'none';
+                if (event.target === templateFillModal) templateFillModal.style.display = 'none';
             });
             
+            // Обработка действий в модальном окне даты
             document.querySelectorAll('.modal-actions button').forEach(btn => {
                 btn.addEventListener('click', function() {
                     const action = this.getAttribute('data-action');
@@ -1320,10 +1661,12 @@
                 });
             });
             
+            // Сохранение проекта
             saveProjectBtn.addEventListener('click', function() {
                 saveProjectChanges();
             });
             
+            // Автозаполнение
             autoFillWeekdaysBtn.addEventListener('click', function() {
                 autoFillWorkDays(true);
             });
@@ -1344,6 +1687,53 @@
                 
                 autoFillWorkDays(excludeWeekends, startDate, endDate);
                 autoFillModal.style.display = 'none';
+            });
+            
+            // Изменение ставок
+            addRateChangeBtn.addEventListener('click', function() {
+                addRateChange();
+            });
+            
+            // Время работы - пересчет при изменении
+            [editWorkStartInput, editWorkEndInput, editLunchStartInput, editLunchEndInput].forEach(input => {
+                input.addEventListener('change', updateNetWorkTime);
+            });
+            
+            // Шаблонное заполнение
+            fillWorkWeekBtn.addEventListener('click', function() {
+                fillWorkWeek();
+            });
+            
+            fillCustomRangeBtn.addEventListener('click', function() {
+                templateFillModal.style.display = 'flex';
+            });
+            
+            fillByTemplateBtn.addEventListener('click', function() {
+                templateFillModal.style.display = 'flex';
+            });
+            
+            templateTypeSelect.addEventListener('change', function() {
+                if (this.value === 'work') {
+                    templateWorkOptions.style.display = 'block';
+                } else {
+                    templateWorkOptions.style.display = 'none';
+                }
+            });
+            
+            applyTemplateFillBtn.addEventListener('click', function() {
+                applyTemplateFill();
+            });
+            
+            // Вкладки в модальном окне редактирования проекта
+            const modalTabs = document.querySelectorAll('.modal-tab');
+            modalTabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const modalTabId = this.getAttribute('data-modal-tab');
+                    modalTabs.forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.modal-tab-content').forEach(mtc => mtc.classList.remove('active'));
+                    this.classList.add('active');
+                    document.getElementById(`modalTab${modalTabId.charAt(0).toUpperCase() + modalTabId.slice(1)}`).classList.add('active');
+                });
             });
         }
         
@@ -1367,6 +1757,8 @@
             const currentProject = workData.projects[workData.currentProject];
             if (!currentProject) return;
             
+            const currentRate = getRateForDate(new Date(), currentProject);
+            
             let infoHTML = `
                 <h2>Информация о проекте</h2>
                 <div class="project-details">
@@ -1383,12 +1775,24 @@
                         <span>${currentProject.workHours} часов</span>
                     </div>
                     <div class="project-detail">
-                        <span class="detail-label">Ставка:</span>
-                        <span>${currentProject.hourlyRate} руб/час</span>
+                        <span class="detail-label">Текущая ставка:</span>
+                        <span>${currentRate} руб/час</span>
+                    </div>
+                    <div class="project-detail">
+                        <span class="detail-label">Время работы:</span>
+                        <span>${currentProject.workStartTime || '09:00'} - ${currentProject.workEndTime || '18:00'}</span>
+                    </div>
+                    <div class="project-detail">
+                        <span class="detail-label">Обеденный перерыв:</span>
+                        <span>${currentProject.lunchStartTime || '13:00'} - ${currentProject.lunchEndTime || '14:00'}</span>
                     </div>
                     <div class="project-detail">
                         <span class="detail-label">Автозаполнение:</span>
                         <span>${currentProject.autoFillEnabled ? 'Включено' : 'Отключено'}</span>
+                    </div>
+                    <div class="project-detail">
+                        <span class="detail-label">Изменений ставки:</span>
+                        <span>${currentProject.rateChanges ? currentProject.rateChanges.length : 0}</span>
                     </div>
                 </div>
                 <button id="editProject" class="btn-sm" style="margin-top: 10px;">Редактировать проект</button>
@@ -1407,6 +1811,7 @@
             updateProjectInfo();
             renderCalendar();
             updateStats();
+            updateRealTimeStats();
         });
         
         addProjectBtn.addEventListener('click', function() {
@@ -1422,10 +1827,15 @@
                 startDate: '',
                 workHours: 8,
                 endDate: '',
-                hourlyRate: 500,
+                baseHourlyRate: 500,
+                rateChanges: [],
                 workDays: {},
                 autoFillEnabled: false,
-                lastAutoFill: null
+                lastAutoFill: null,
+                workStartTime: '09:00',
+                workEndTime: '18:00',
+                lunchStartTime: '13:00',
+                lunchEndTime: '14:00'
             };
             
             saveToStorage();
@@ -1462,11 +1872,11 @@
                         </div>
                         <div class="project-detail">
                             <span class="detail-label">Ставка:</span>
-                            <span>${project.hourlyRate} руб/час</span>
+                            <span>${project.baseHourlyRate} руб/час</span>
                         </div>
                         <div class="project-detail">
-                            <span class="detail-label">Автозаполнение:</span>
-                            <span>${project.autoFillEnabled ? 'Включено' : 'Отключено'}</span>
+                            <span class="detail-label">Изменений ставки:</span>
+                            <span>${project.rateChanges ? project.rateChanges.length : 0}</span>
                         </div>
                     </div>
                     <div class="stats-grid" style="margin-top: 10px;">
@@ -1522,25 +1932,157 @@
         function openEditProjectModal(projectId) {
             editingProjectId = projectId;
             const project = workData.projects[projectId];
+            
+            // Основные настройки
             editProjectNameInput.value = project.name;
             editStartDateInput.value = project.startDate;
             editWorkHoursInput.value = project.workHours;
             editEndDateInput.value = project.endDate;
-            editHourlyRateInput.value = project.hourlyRate;
+            editBaseHourlyRateInput.value = project.baseHourlyRate;
             autoFillEnabledCheckbox.checked = project.autoFillEnabled;
+            
+            // Время работы
+            editWorkStartInput.value = project.workStartTime || '09:00';
+            editWorkEndInput.value = project.workEndTime || '18:00';
+            editLunchStartInput.value = project.lunchStartTime || '13:00';
+            editLunchEndInput.value = project.lunchEndTime || '14:00';
+            
             updateAutoFillStatus(project.autoFillEnabled);
+            updateNetWorkTime();
+            renderRateChangesList(project.rateChanges || []);
+            
             editProjectModal.style.display = 'flex';
+        }
+        
+        function updateNetWorkTime() {
+            const workStart = editWorkStartInput.value;
+            const workEnd = editWorkEndInput.value;
+            const lunchStart = editLunchStartInput.value;
+            const lunchEnd = editLunchEndInput.value;
+            
+            if (workStart && workEnd && lunchStart && lunchEnd) {
+                const workStartTime = parseTime(workStart);
+                const workEndTime = parseTime(workEnd);
+                const lunchStartTime = parseTime(lunchStart);
+                const lunchEndTime = parseTime(lunchEnd);
+                
+                let totalMinutes = (workEndTime.hours * 60 + workEndTime.minutes) - 
+                                  (workStartTime.hours * 60 + workStartTime.minutes);
+                
+                // Вычитаем обеденное время
+                totalMinutes -= (lunchEndTime.hours * 60 + lunchEndTime.minutes) - 
+                               (lunchStartTime.hours * 60 + lunchStartTime.minutes);
+                
+                const hours = Math.floor(totalMinutes / 60);
+                const minutes = totalMinutes % 60;
+                
+                netWorkTimeElement.textContent = `${hours} ч ${minutes} мин`;
+            } else {
+                netWorkTimeElement.textContent = '8 часов';
+            }
+        }
+        
+        function parseTime(timeStr) {
+            const [hours, minutes] = timeStr.split(':').map(Number);
+            return { hours, minutes };
+        }
+        
+        function renderRateChangesList(rateChanges) {
+            rateChangesListElement.innerHTML = '';
+            
+            // Сортируем по дате (от старых к новым)
+            const sortedChanges = [...rateChanges].sort((a, b) => new Date(a.date) - new Date(b.date));
+            
+            if (sortedChanges.length === 0) {
+                rateChangesListElement.innerHTML = '<p>Нет изменений ставок</p>';
+                return;
+            }
+            
+            sortedChanges.forEach((change, index) => {
+                const changeElement = document.createElement('div');
+                changeElement.className = 'rate-change-item';
+                changeElement.innerHTML = `
+                    <div>
+                        <div class="rate-change-date">${formatDateDisplay(new Date(change.date))}</div>
+                        <div class="rate-change-rate">${change.rate} руб/час</div>
+                    </div>
+                    <div class="rate-change-actions">
+                        <button class="btn-sm delete-rate-change" data-index="${index}">Удалить</button>
+                    </div>
+                `;
+                rateChangesListElement.appendChild(changeElement);
+            });
+            
+            // Добавляем обработчики удаления
+            document.querySelectorAll('.delete-rate-change').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const index = parseInt(this.getAttribute('data-index'));
+                    deleteRateChange(index);
+                });
+            });
+        }
+        
+        function addRateChange() {
+            const date = newRateDateInput.value;
+            const rate = parseFloat(newRateValueInput.value);
+            
+            if (!date || !rate || rate <= 0) {
+                showNotification('Введите корректные данные', 'error');
+                return;
+            }
+            
+            const project = workData.projects[editingProjectId];
+            if (!project.rateChanges) {
+                project.rateChanges = [];
+            }
+            
+            // Проверяем, нет ли уже изменения на эту дату
+            const existingIndex = project.rateChanges.findIndex(change => change.date === date);
+            if (existingIndex >= 0) {
+                project.rateChanges[existingIndex].rate = rate;
+            } else {
+                project.rateChanges.push({ date, rate });
+            }
+            
+            // Сортируем по дате
+            project.rateChanges.sort((a, b) => new Date(a.date) - new Date(b.date));
+            
+            saveToStorage();
+            renderRateChangesList(project.rateChanges);
+            showNotification('Изменение ставки добавлено');
+            
+            // Очищаем поля
+            newRateDateInput.value = formatDate(new Date());
+            newRateValueInput.value = project.baseHourlyRate;
+        }
+        
+        function deleteRateChange(index) {
+            const project = workData.projects[editingProjectId];
+            if (project.rateChanges && project.rateChanges[index]) {
+                project.rateChanges.splice(index, 1);
+                saveToStorage();
+                renderRateChangesList(project.rateChanges);
+                showNotification('Изменение ставки удалено');
+            }
         }
         
         function saveProjectChanges() {
             if (!editingProjectId) return;
             const project = workData.projects[editingProjectId];
+            
+            // Основные настройки
             project.name = editProjectNameInput.value;
             project.startDate = editStartDateInput.value;
             project.workHours = parseInt(editWorkHoursInput.value);
             project.endDate = editEndDateInput.value;
-            project.hourlyRate = parseInt(editHourlyRateInput.value);
+            project.baseHourlyRate = parseInt(editBaseHourlyRateInput.value);
             project.autoFillEnabled = autoFillEnabledCheckbox.checked;
+            
+            // Время работы
+            project.workStartTime = editWorkStartInput.value;
+            project.workEndTime = editWorkEndInput.value;
+            project.lunchStartTime = editLunchStartInput.value;
+            project.lunchEndTime = editLunchEndInput.value;
             
             if (project.autoFillEnabled) {
                 project.lastAutoFill = new Date().toISOString().split('T')[0];
@@ -1652,7 +2194,8 @@
                         const workInfo = document.createElement('div');
                         workInfo.className = 'work-info';
                         const actualHours = dayData.actualHours || currentProject.workHours;
-                        workInfo.textContent = `${actualHours}ч / ${actualHours * currentProject.hourlyRate}р`;
+                        const rate = getRateForDate(date, currentProject);
+                        workInfo.textContent = `${actualHours}ч / ${Math.round(actualHours * rate)}р`;
                         dateElement.appendChild(workInfo);
                     }
                 }
@@ -1679,14 +2222,16 @@
             if (dayData) {
                 if (dayData.type === 'work') {
                     const actualHours = dayData.actualHours || currentProject.workHours;
-                    infoHTML = `<p>Тип: Рабочий день</p><p>Отработано часов: ${actualHours}</p><p>Заработано: ${actualHours * currentProject.hourlyRate} руб</p>`;
+                    const rate = getRateForDate(date, currentProject);
+                    infoHTML = `<p>Тип: Рабочий день</p><p>Отработано часов: ${actualHours}</p><p>Ставка: ${rate} руб/час</p><p>Заработано: ${Math.round(actualHours * rate)} руб</p>`;
                 } else if (dayData.type === 'vacation') {
                     infoHTML = `<p>Тип: Отпуск</p>`;
                 } else if (dayData.type === 'sick') {
                     infoHTML = `<p>Тип: Больничный</p>`;
                 }
             } else {
-                infoHTML = `<p>День не отмечен</p>`;
+                const rate = getRateForDate(date, currentProject);
+                infoHTML = `<p>День не отмечен</p><p>Текущая ставка на эту дату: ${rate} руб/час</p>`;
             }
             
             modalDateInfo.innerHTML = infoHTML;
@@ -1715,7 +2260,7 @@
             saveToStorage();
             renderCalendar();
             updateStats();
-            checkNotifications();
+            updateRealTimeStats();
             showNotification('Данные обновлены!');
         }
         
@@ -1755,6 +2300,84 @@
             showNotification(`Заполнено ${filledDays} рабочих дней!`);
         }
         
+        function fillWorkWeek() {
+            const currentProject = workData.projects[workData.currentProject];
+            const today = new Date();
+            const monday = new Date(today);
+            monday.setDate(today.getDate() - today.getDay() + (today.getDay() === 0 ? -6 : 1));
+            const friday = new Date(monday);
+            friday.setDate(monday.getDate() + 4);
+            
+            if (!currentProject.workDays) currentProject.workDays = {};
+            let filledDays = 0;
+            const currentDateObj = new Date(monday);
+            
+            while (currentDateObj <= friday) {
+                const dateString = formatDate(currentDateObj);
+                
+                if (!currentProject.workDays[dateString]) {
+                    currentProject.workDays[dateString] = {
+                        type: 'work',
+                        actualHours: currentProject.workHours
+                    };
+                    filledDays++;
+                }
+                currentDateObj.setDate(currentDateObj.getDate() + 1);
+            }
+            
+            saveToStorage();
+            renderCalendar();
+            updateStats();
+            showNotification(`Заполнена рабочая неделя (${filledDays} дней)!`);
+        }
+        
+        function applyTemplateFill() {
+            const startDate = new Date(templateStartDateInput.value);
+            const endDate = new Date(templateEndDateInput.value);
+            const type = templateTypeSelect.value;
+            const hours = parseFloat(templateHoursInput.value) || 8;
+            const excludeWeekends = templateExcludeWeekendsCheckbox.checked;
+            
+            if (isNaN(startDate) || isNaN(endDate)) {
+                showNotification('Выберите корректные даты', 'error');
+                return;
+            }
+            
+            const currentProject = workData.projects[workData.currentProject];
+            if (!currentProject.workDays) currentProject.workDays = {};
+            let filledDays = 0;
+            const currentDateObj = new Date(startDate);
+            
+            while (currentDateObj <= endDate) {
+                const dateString = formatDate(currentDateObj);
+                const dayOfWeek = currentDateObj.getDay();
+                
+                if (excludeWeekends && type === 'work' && (dayOfWeek === 0 || dayOfWeek === 6)) {
+                    currentDateObj.setDate(currentDateObj.getDate() + 1);
+                    continue;
+                }
+                
+                if (!currentProject.workDays[dateString]) {
+                    if (type === 'work') {
+                        currentProject.workDays[dateString] = {
+                            type: type,
+                            actualHours: hours
+                        };
+                    } else {
+                        currentProject.workDays[dateString] = { type: type };
+                    }
+                    filledDays++;
+                }
+                currentDateObj.setDate(currentDateObj.getDate() + 1);
+            }
+            
+            saveToStorage();
+            renderCalendar();
+            updateStats();
+            templateFillModal.style.display = 'none';
+            showNotification(`Заполнено ${filledDays} дней по шаблону!`);
+        }
+        
         function checkAutoFill() {
             for (const projectId in workData.projects) {
                 const project = workData.projects[projectId];
@@ -1774,11 +2397,35 @@
             updateStats();
         }
         
+        // Функция для получения ставки на конкретную дату
+        function getRateForDate(date, project) {
+            if (!project.rateChanges || project.rateChanges.length === 0) {
+                return project.baseHourlyRate;
+            }
+            
+            const dateStr = formatDate(date);
+            let applicableRate = project.baseHourlyRate;
+            
+            // Сортируем изменения по дате (от старых к новым)
+            const sortedChanges = [...project.rateChanges].sort((a, b) => new Date(a.date) - new Date(b.date));
+            
+            // Находим последнее изменение, которое вступило в силу до или на указанную дату
+            for (const change of sortedChanges) {
+                if (change.date <= dateStr) {
+                    applicableRate = change.rate;
+                } else {
+                    break;
+                }
+            }
+            
+            return applicableRate;
+        }
+        
         function updateStats() {
             const stats = calculateProjectStats(workData.currentProject, 'current');
             workedDaysElement.textContent = stats.days;
             workedHoursElement.textContent = stats.hours;
-            earnedAmountElement.textContent = `${stats.earned.toLocaleString()} руб`;
+            earnedAmountElement.textContent = `${Math.round(stats.earned).toLocaleString()} руб`;
             overtimeElement.textContent = `${stats.overtime} ч`;
             undertimeElement.textContent = `${stats.undertime} ч`;
             vacationDaysElement.textContent = stats.vacationDays;
@@ -1786,7 +2433,7 @@
             
             miniWorkedDays.textContent = stats.days;
             miniWorkedHours.textContent = stats.hours;
-            miniEarned.textContent = `${stats.earned.toLocaleString()} руб`;
+            miniEarned.textContent = `${Math.round(stats.earned).toLocaleString()} руб`;
             
             const currentProject = workData.projects[workData.currentProject];
             if (currentProject.startDate && currentProject.endDate) {
@@ -1830,8 +2477,9 @@
                 if (dayData.type === 'work') {
                     days++;
                     const actualHours = dayData.actualHours || project.workHours;
+                    const rate = getRateForDate(date, project);
                     hours += actualHours;
-                    earned += actualHours * project.hourlyRate;
+                    earned += actualHours * rate;
                     if (actualHours > project.workHours) overtime += actualHours - project.workHours;
                     else if (actualHours < project.workHours) undertime += project.workHours - actualHours;
                 } else if (dayData.type === 'vacation') vacationDays++;
@@ -1860,8 +2508,9 @@
                 if (dayData.type === 'work') {
                     days++;
                     const actualHours = dayData.actualHours || currentProject.workHours;
+                    const rate = getRateForDate(date, currentProject);
                     hours += actualHours;
-                    earned += actualHours * currentProject.hourlyRate;
+                    earned += actualHours * rate;
                     if (actualHours > currentProject.workHours) overtime += actualHours - currentProject.workHours;
                     else if (actualHours < currentProject.workHours) undertime += currentProject.workHours - actualHours;
                 } else if (dayData.type === 'vacation') vacationDays++;
@@ -1873,7 +2522,7 @@
                 <div class="stat-card"><div class="stat-value">${hours}</div><div class="stat-label">Отработано часов</div></div>
                 <div class="stat-card"><div class="stat-value">${overtime} ч</div><div class="stat-label">Переработка</div></div>
                 <div class="stat-card"><div class="stat-value">${undertime} ч</div><div class="stat-label">Недоработка</div></div>
-                <div class="stat-card"><div class="stat-value">${earned.toLocaleString()} руб</div><div class="stat-label">Заработано</div></div>
+                <div class="stat-card"><div class="stat-value">${Math.round(earned).toLocaleString()} руб</div><div class="stat-label">Заработано</div></div>
                 <div class="stat-card"><div class="stat-value">${vacationDays}</div><div class="stat-label">Отпускных дней</div></div>
                 <div class="stat-card"><div class="stat-value">${sickDays}</div><div class="stat-label">Больничных дней</div></div>
             `;
@@ -1887,7 +2536,7 @@
                 <div class="stat-card"><div class="stat-value">${stats.hours}</div><div class="stat-label">Отработано часов</div></div>
                 <div class="stat-card"><div class="stat-value">${stats.overtime} ч</div><div class="stat-label">Переработка</div></div>
                 <div class="stat-card"><div class="stat-value">${stats.undertime} ч</div><div class="stat-label">Недоработка</div></div>
-                <div class="stat-card"><div class="stat-value">${stats.earned.toLocaleString()} руб</div><div class="stat-label">Заработано</div></div>
+                <div class="stat-card"><div class="stat-value">${Math.round(stats.earned).toLocaleString()} руб</div><div class="stat-label">Заработано</div></div>
                 <div class="stat-card"><div class="stat-value">${stats.vacationDays}</div><div class="stat-label">Отпускных дней</div></div>
                 <div class="stat-card"><div class="stat-value">${stats.sickDays}</div><div class="stat-label">Больничных дней</div></div>
             `;
@@ -1939,8 +2588,9 @@
                 if (dayData.type === 'work') {
                     days++;
                     const actualHours = dayData.actualHours || currentProject.workHours;
+                    const rate = getRateForDate(date, currentProject);
                     hours += actualHours;
-                    earned += actualHours * currentProject.hourlyRate;
+                    earned += actualHours * rate;
                     if (actualHours > currentProject.workHours) overtime += actualHours - currentProject.workHours;
                     else if (actualHours < currentProject.workHours) undertime += currentProject.workHours - actualHours;
                 } else if (dayData.type === 'vacation') vacationDays++;
@@ -1952,7 +2602,7 @@
                 <div class="stat-card"><div class="stat-value">${hours}</div><div class="stat-label">Отработано часов</div></div>
                 <div class="stat-card"><div class="stat-value">${overtime} ч</div><div class="stat-label">Переработка</div></div>
                 <div class="stat-card"><div class="stat-value">${undertime} ч</div><div class="stat-label">Недоработка</div></div>
-                <div class="stat-card"><div class="stat-value">${earned.toLocaleString()} руб</div><div class="stat-label">Заработано</div></div>
+                <div class="stat-card"><div class="stat-value">${Math.round(earned).toLocaleString()} руб</div><div class="stat-label">Заработано</div></div>
                 <div class="stat-card"><div class="stat-value">${vacationDays}</div><div class="stat-label">Отпускных дней</div></div>
                 <div class="stat-card"><div class="stat-value">${sickDays}</div><div class="stat-label">Больничных дней</div></div>
             `;
@@ -1974,7 +2624,7 @@
                     <div class="project-stats-grid">
                         <div class="stat-card"><div class="stat-value">${stats.days}</div><div class="stat-label">Отработано дней</div></div>
                         <div class="stat-card"><div class="stat-value">${stats.hours}</div><div class="stat-label">Отработано часов</div></div>
-                        <div class="stat-card"><div class="stat-value">${stats.earned.toLocaleString()} руб</div><div class="stat-label">Заработано</div></div>
+                        <div class="stat-card"><div class="stat-value">${Math.round(stats.earned).toLocaleString()} руб</div><div class="stat-label">Заработано</div></div>
                         <div class="stat-card"><div class="stat-value">${stats.vacationDays + stats.sickDays}</div><div class="stat-label">Нерабочих дней</div></div>
                     </div>
                 `;
@@ -1982,21 +2632,155 @@
             }
         }
         
-        function checkNotifications() {
-            const currentProject = workData.projects[workData.currentProject];
-            if (currentProject.endDate) {
-                const endDate = new Date(currentProject.endDate);
-                const today = new Date();
-                const timeDiff = endDate.getTime() - today.getTime();
-                const daysDiff = Math.ceil(timeDiff / (1000 * 3600 * 24));
-                if (daysDiff <= 7 && daysDiff > 0) {
-                    showNotification(`До окончания проекта осталось ${daysDiff} дней`, 'warning');
-                }
+        // ==================== РЕАЛЬНОЕ ВРЕМЯ ====================
+        function startRealTimeUpdates() {
+            if (realTimeInterval) {
+                clearInterval(realTimeInterval);
             }
             
-            const stats = calculateProjectStats(workData.currentProject);
-            if (stats.overtime > 10) {
-                showNotification(`В этом месяце переработка: ${stats.overtime} часов`, 'warning');
+            realTimeInterval = setInterval(updateRealTime, 1000);
+            updateRealTime();
+        }
+        
+        function updateRealTime() {
+            const now = new Date();
+            const hours = now.getHours().toString().padStart(2, '0');
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            const seconds = now.getSeconds().toString().padStart(2, '0');
+            
+            realTimeClockElement.textContent = `${hours}:${minutes}:${seconds}`;
+            
+            updateRealTimeEarnings();
+        }
+        
+        function updateRealTimeEarnings() {
+            const now = new Date();
+            const today = formatDate(now);
+            const currentProject = workData.projects[workData.currentProject];
+            const todayData = currentProject.workDays && currentProject.workDays[today];
+            
+            // Проверяем, сегодняшний день рабочий
+            if (!todayData || todayData.type !== 'work') {
+                realTimeEarnedElement.textContent = '0.00 руб';
+                realTimeStatusElement.textContent = 'Сегодня не рабочий день';
+                realTimeWidget.style.background = 'linear-gradient(135deg, var(--gray), #7f8c8d)';
+                return;
+            }
+            
+            const workStart = parseTime(currentProject.workStartTime || '09:00');
+            const workEnd = parseTime(currentProject.workEndTime || '18:00');
+            const lunchStart = parseTime(currentProject.lunchStartTime || '13:00');
+            const lunchEnd = parseTime(currentProject.lunchEndTime || '14:00');
+            
+            const currentHour = now.getHours();
+            const currentMinute = now.getMinutes();
+            const currentSecond = now.getSeconds();
+            
+            // Проверяем, находимся ли мы в рабочее время
+            const currentTimeInMinutes = currentHour * 60 + currentMinute;
+            const workStartInMinutes = workStart.hours * 60 + workStart.minutes;
+            const workEndInMinutes = workEnd.hours * 60 + workEnd.minutes;
+            const lunchStartInMinutes = lunchStart.hours * 60 + lunchStart.minutes;
+            const lunchEndInMinutes = lunchEnd.hours * 60 + lunchEnd.minutes;
+            
+            let earnedToday = 0;
+            let status = 'Вне рабочего времени';
+            let widgetColor = 'linear-gradient(135deg, var(--gray), #7f8c8d)';
+            
+            // Если сейчас рабочее время (и не обед)
+            if (currentTimeInMinutes >= workStartInMinutes && currentTimeInMinutes <= workEndInMinutes) {
+                if (currentTimeInMinutes >= lunchStartInMinutes && currentTimeInMinutes <= lunchEndInMinutes) {
+                    status = 'Обеденный перерыв';
+                    widgetColor = 'linear-gradient(135deg, var(--warning), #e67e22)';
+                    
+                    // Считаем заработанное до обеда
+                    const morningWorkMinutes = lunchStartInMinutes - workStartInMinutes;
+                    earnedToday = (morningWorkMinutes / 60) * getRateForDate(now, currentProject);
+                } else {
+                    status = 'Идет рабочий день';
+                    widgetColor = 'linear-gradient(135deg, var(--success), #27ae60)';
+                    
+                    let workedMinutes = 0;
+                    
+                    if (currentTimeInMinutes < lunchStartInMinutes) {
+                        // До обеда
+                        workedMinutes = currentTimeInMinutes - workStartInMinutes;
+                    } else {
+                        // После обеда
+                        workedMinutes = (lunchStartInMinutes - workStartInMinutes) + 
+                                       (currentTimeInMinutes - lunchEndInMinutes);
+                    }
+                    
+                    // Добавляем секунды
+                    const workedSeconds = workedMinutes * 60 + currentSecond;
+                    const workedHours = workedSeconds / 3600;
+                    earnedToday = workedHours * getRateForDate(now, currentProject);
+                }
+            } else if (currentTimeInMinutes < workStartInMinutes) {
+                status = 'Рабочий день еще не начался';
+                widgetColor = 'linear-gradient(135deg, var(--primary), #2980b9)';
+            } else if (currentTimeInMinutes > workEndInMinutes) {
+                status = 'Рабочий день завершен';
+                widgetColor = 'linear-gradient(135deg, var(--success), #27ae60)';
+                
+                // Считаем весь рабочий день (минус обед)
+                const totalWorkMinutes = (workEndInMinutes - workStartInMinutes) - 
+                                       (lunchEndInMinutes - lunchStartInMinutes);
+                earnedToday = (totalWorkMinutes / 60) * getRateForDate(now, currentProject);
+            }
+            
+            realTimeEarnedElement.textContent = `${earnedToday.toFixed(2)} руб`;
+            realTimeStatusElement.textContent = status;
+            realTimeWidget.style.background = widgetColor;
+        }
+        
+        function updateRealTimeStats() {
+            const currentProject = workData.projects[workData.currentProject];
+            const now = new Date();
+            const today = formatDate(now);
+            const todayData = currentProject.workDays && currentProject.workDays[today];
+            
+            // Текущая ставка
+            const currentRate = getRateForDate(now, currentProject);
+            currentRateElement.textContent = `${currentRate} руб/час`;
+            
+            // Заработано сегодня
+            let earnedToday = 0;
+            if (todayData && todayData.type === 'work') {
+                const actualHours = todayData.actualHours || currentProject.workHours;
+                earnedToday = actualHours * currentRate;
+            }
+            earnedTodayElement.textContent = `${Math.round(earnedToday)} руб`;
+            
+            // Рабочее время сегодня
+            const workStart = parseTime(currentProject.workStartTime || '09:00');
+            const workEnd = parseTime(currentProject.workEndTime || '18:00');
+            const lunchStart = parseTime(currentProject.lunchStartTime || '13:00');
+            const lunchEnd = parseTime(currentProject.lunchEndTime || '14:00');
+            
+            const workStartInMinutes = workStart.hours * 60 + workStart.minutes;
+            const workEndInMinutes = workEnd.hours * 60 + workEnd.minutes;
+            const lunchStartInMinutes = lunchStart.hours * 60 + lunchStart.minutes;
+            const lunchEndInMinutes = lunchEnd.hours * 60 + lunchEnd.minutes;
+            
+            const totalWorkMinutes = (workEndInMinutes - workStartInMinutes) - 
+                                   (lunchEndInMinutes - lunchStartInMinutes);
+            const hours = Math.floor(totalWorkMinutes / 60);
+            const minutes = totalWorkMinutes % 60;
+            
+            workTimeTodayElement.textContent = `${hours} ч ${minutes} мин`;
+            
+            // Следующее изменение ставки
+            if (currentProject.rateChanges && currentProject.rateChanges.length > 0) {
+                const futureChanges = currentProject.rateChanges.filter(change => change.date > formatDate(now));
+                if (futureChanges.length > 0) {
+                    const nextChange = futureChanges[0];
+                    nextRateChangeElement.textContent = `${formatDateDisplay(new Date(nextChange.date))} - ${nextChange.rate} руб/час`;
+                } else {
+                    nextRateChangeElement.textContent = 'Нет запланированных изменений';
+                }
+            } else {
+                nextRateChangeElement.textContent = 'Нет запланированных изменений';
             }
         }
         
