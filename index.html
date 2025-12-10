@@ -728,7 +728,7 @@
             font-size: 0.9rem;
         }
         
-        /* Стили для реального времени */
+        /* Стили для реального времени - ИСПРАВЛЕНО */
         .real-time-widget {
             background: linear-gradient(135deg, var(--primary), var(--primary-dark));
             color: white;
@@ -742,7 +742,7 @@
         
         .real-time-title {
             font-size: 1rem;
-            margin-bottom: 10px;
+            margin-bottom: 15px;
             opacity: 0.9;
         }
         
@@ -751,7 +751,7 @@
             font-weight: bold;
             font-family: 'Courier New', monospace;
             letter-spacing: 2px;
-            margin-bottom: 5px;
+            margin-bottom: 10px;
         }
         
         .real-time-earned {
@@ -761,8 +761,71 @@
         }
         
         .real-time-status {
-            font-size: 0.8rem;
+            font-size: 0.9rem;
+            margin-bottom: 15px;
+            opacity: 0.9;
+        }
+        
+        /* Новые стили для статус-бара */
+        .time-progress-container {
+            margin-top: 15px;
+        }
+        
+        .time-progress-title {
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .time-progress-bar {
+            height: 8px;
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 8px;
+            position: relative;
+        }
+        
+        .time-progress-fill {
+            height: 100%;
+            background-color: white;
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+        
+        .time-progress-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.7rem;
             opacity: 0.8;
+        }
+        
+        .time-progress-marker {
+            position: absolute;
+            top: -3px;
+            width: 2px;
+            height: 14px;
+            background-color: rgba(255, 255, 255, 0.5);
+        }
+        
+        .time-progress-marker.start {
+            background-color: var(--success);
+        }
+        
+        .time-progress-marker.lunch {
+            background-color: var(--warning);
+        }
+        
+        .time-progress-marker.end {
+            background-color: var(--danger);
+        }
+        
+        .countdown-timer {
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-top: 10px;
+            font-family: 'Courier New', monospace;
         }
         
         /* Стили для вкладок в модальном окне */
@@ -949,12 +1012,32 @@
                 </div>
             </div>
             
-            <!-- Виджет реального времени -->
+            <!-- Виджет реального времени с новым статус-баром -->
             <div class="real-time-widget" id="realTimeWidget">
                 <div class="real-time-title">СТАТУС РАБОЧЕГО ДНЯ</div>
                 <div class="real-time-clock" id="realTimeClock">00:00:00</div>
-                <div class="real-time-earned" id="realTimeEarned">0 руб</div>
+                <div class="real-time-earned" id="realTimeEarned">0.00 руб</div>
                 <div class="real-time-status" id="realTimeStatus">Сегодня не рабочий день</div>
+                
+                <!-- Новый статус-бар -->
+                <div class="time-progress-container" id="timeProgressContainer" style="display: none;">
+                    <div class="time-progress-title">
+                        <span>Прогресс рабочего дня</span>
+                        <span id="progressPercentage">0%</span>
+                    </div>
+                    <div class="time-progress-bar" id="timeProgressBar">
+                        <div class="time-progress-fill" id="timeProgressFill" style="width: 0%"></div>
+                        <div class="time-progress-marker start" id="startMarker" style="left: 0%"></div>
+                        <div class="time-progress-marker lunch" id="lunchMarker" style="left: 50%"></div>
+                        <div class="time-progress-marker end" id="endMarker" style="left: 100%"></div>
+                    </div>
+                    <div class="time-progress-labels">
+                        <span id="startTimeLabel">09:00</span>
+                        <span id="lunchTimeLabel">13:00</span>
+                        <span id="endTimeLabel">18:00</span>
+                    </div>
+                    <div class="countdown-timer" id="countdownTimer">--:--:--</div>
+                </div>
             </div>
         </div>
         
@@ -1476,6 +1559,26 @@
         const earnedTodayElement = document.getElementById('earnedToday');
         const nextRateChangeElement = document.getElementById('nextRateChange');
         
+        // Новые элементы для статус-бара
+        const timeProgressContainer = document.getElementById('timeProgressContainer');
+        const progressPercentage = document.getElementById('progressPercentage');
+        const timeProgressFill = document.getElementById('timeProgressFill');
+        const startMarker = document.getElementById('startMarker');
+        const lunchMarker = document.getElementById('lunchMarker');
+        const endMarker = document.getElementById('endMarker');
+        const startTimeLabel = document.getElementById('startTimeLabel');
+        const lunchTimeLabel = document.getElementById('lunchTimeLabel');
+        const endTimeLabel = document.getElementById('endTimeLabel');
+        const countdownTimer = document.getElementById('countdownTimer');
+        
+        // Переменные для реального времени
+        let todayEarned = 0;
+        let isWorkingNow = false;
+        let workStartTime = null;
+        let lunchStartTime = null;
+        let lunchEndTime = null;
+        let workEndTime = null;
+        
         // Инициализация
         function init() {
             applyTheme(workData.theme);
@@ -1923,6 +2026,10 @@
         function parseTime(timeStr) {
             const [hours, minutes] = timeStr.split(':').map(Number);
             return { hours, minutes };
+        }
+        
+        function timeToMinutes(timeObj) {
+            return timeObj.hours * 60 + timeObj.minutes;
         }
         
         function renderRateChangesList(rateChanges) {
@@ -2429,149 +2536,6 @@
             return { days, hours, earned, overtime, undertime, vacationDays, sickDays };
         }
         
-        function loadPeriodStats() {
-            const startDate = new Date(periodStartDateInput.value);
-            const endDate = new Date(periodEndDateInput.value);
-            if (isNaN(startDate) || isNaN(endDate)) {
-                showNotification('Выберите корректные даты', 'error');
-                return;
-            }
-            
-            const currentProject = workData.projects[workData.currentProject];
-            let days = 0, hours = 0, earned = 0, overtime = 0, undertime = 0, vacationDays = 0, sickDays = 0;
-            
-            for (const dateString in currentProject.workDays) {
-                const date = new Date(dateString);
-                if (date < startDate || date > endDate) continue;
-                
-                const dayData = currentProject.workDays[dateString];
-                if (dayData.type === 'work') {
-                    days++;
-                    const actualHours = dayData.actualHours || currentProject.workHours;
-                    const rate = getRateForDate(date, currentProject);
-                    hours += actualHours;
-                    earned += actualHours * rate;
-                    if (actualHours > currentProject.workHours) overtime += actualHours - currentProject.workHours;
-                    else if (actualHours < currentProject.workHours) undertime += currentProject.workHours - actualHours;
-                } else if (dayData.type === 'vacation') vacationDays++;
-                else if (dayData.type === 'sick') sickDays++;
-            }
-            
-            periodStatsElement.innerHTML = `
-                <div class="stat-card"><div class="stat-value">${days}</div><div class="stat-label">Отработано дней</div></div>
-                <div class="stat-card"><div class="stat-value">${hours}</div><div class="stat-label">Отработано часов</div></div>
-                <div class="stat-card"><div class="stat-value">${overtime} ч</div><div class="stat-label">Переработка</div></div>
-                <div class="stat-card"><div class="stat-value">${undertime} ч</div><div class="stat-label">Недоработка</div></div>
-                <div class="stat-card"><div class="stat-value">${Math.round(earned).toLocaleString()} руб</div><div class="stat-label">Заработано</div></div>
-                <div class="stat-card"><div class="stat-value">${vacationDays}</div><div class="stat-label">Отпускных дней</div></div>
-                <div class="stat-card"><div class="stat-value">${sickDays}</div><div class="stat-label">Больничных дней</div></div>
-            `;
-        }
-        
-        function loadTotalStats() {
-            const currentProject = workData.projects[workData.currentProject];
-            const stats = calculateProjectStats(workData.currentProject, 'all');
-            totalStatsElement.innerHTML = `
-                <div class="stat-card"><div class="stat-value">${stats.days}</div><div class="stat-label">Отработано дней</div></div>
-                <div class="stat-card"><div class="stat-value">${stats.hours}</div><div class="stat-label">Отработано часов</div></div>
-                <div class="stat-card"><div class="stat-value">${stats.overtime} ч</div><div class="stat-label">Переработка</div></div>
-                <div class="stat-card"><div class="stat-value">${stats.undertime} ч</div><div class="stat-label">Недоработка</div></div>
-                <div class="stat-card"><div class="stat-value">${Math.round(stats.earned).toLocaleString()} руб</div><div class="stat-label">Заработано</div></div>
-                <div class="stat-card"><div class="stat-value">${stats.vacationDays}</div><div class="stat-label">Отпускных дней</div></div>
-                <div class="stat-card"><div class="stat-value">${stats.sickDays}</div><div class="stat-label">Больничных дней</div></div>
-            `;
-        }
-        
-        function loadMonthlyStats() {
-            const currentProject = workData.projects[workData.currentProject];
-            const months = [];
-            const currentYear = new Date().getFullYear();
-            
-            for (let i = 0; i < 12; i++) {
-                const monthDate = new Date(currentYear, i, 1);
-                months.push({
-                    name: monthDate.toLocaleDateString('ru-RU', { month: 'long' }),
-                    year: currentYear,
-                    start: new Date(currentYear, i, 1),
-                    end: new Date(currentYear, i + 1, 0)
-                });
-            }
-            
-            monthsSelectorElement.innerHTML = '';
-            months.forEach(month => {
-                const button = document.createElement('div');
-                button.className = 'period-btn';
-                button.textContent = month.name;
-                button.addEventListener('click', function() {
-                    document.querySelectorAll('.period-btn').forEach(btn => btn.classList.remove('active'));
-                    this.classList.add('active');
-                    loadMonthStats(month.start, month.end);
-                });
-                monthsSelectorElement.appendChild(button);
-            });
-            
-            if (monthsSelectorElement.children.length > 0) {
-                monthsSelectorElement.children[new Date().getMonth()].classList.add('active');
-                loadMonthStats(months[new Date().getMonth()].start, months[new Date().getMonth()].end);
-            }
-        }
-        
-        function loadMonthStats(startDate, endDate) {
-            const currentProject = workData.projects[workData.currentProject];
-            let days = 0, hours = 0, earned = 0, overtime = 0, undertime = 0, vacationDays = 0, sickDays = 0;
-            
-            for (const dateString in currentProject.workDays) {
-                const date = new Date(dateString);
-                if (date < startDate || date > endDate) continue;
-                
-                const dayData = currentProject.workDays[dateString];
-                if (dayData.type === 'work') {
-                    days++;
-                    const actualHours = dayData.actualHours || currentProject.workHours;
-                    const rate = getRateForDate(date, currentProject);
-                    hours += actualHours;
-                    earned += actualHours * rate;
-                    if (actualHours > currentProject.workHours) overtime += actualHours - currentProject.workHours;
-                    else if (actualHours < currentProject.workHours) undertime += currentProject.workHours - actualHours;
-                } else if (dayData.type === 'vacation') vacationDays++;
-                else if (dayData.type === 'sick') sickDays++;
-            }
-            
-            monthlyStatsElement.innerHTML = `
-                <div class="stat-card"><div class="stat-value">${days}</div><div class="stat-label">Отработано дней</div></div>
-                <div class="stat-card"><div class="stat-value">${hours}</div><div class="stat-label">Отработано часов</div></div>
-                <div class="stat-card"><div class="stat-value">${overtime} ч</div><div class="stat-label">Переработка</div></div>
-                <div class="stat-card"><div class="stat-value">${undertime} ч</div><div class="stat-label">Недоработка</div></div>
-                <div class="stat-card"><div class="stat-value">${Math.round(earned).toLocaleString()} руб</div><div class="stat-label">Заработано</div></div>
-                <div class="stat-card"><div class="stat-value">${vacationDays}</div><div class="stat-label">Отпускных дней</div></div>
-                <div class="stat-card"><div class="stat-value">${sickDays}</div><div class="stat-label">Больничных дней</div></div>
-            `;
-        }
-        
-        function loadProjectsStats() {
-            projectsStatsElement.innerHTML = '';
-            for (const projectId in workData.projects) {
-                const project = workData.projects[projectId];
-                const stats = calculateProjectStats(projectId, 'all');
-                
-                const projectStatCard = document.createElement('div');
-                projectStatCard.className = 'project-stat-card';
-                projectStatCard.innerHTML = `
-                    <div class="project-stat-header">
-                        <div class="project-stat-name">${project.name}</div>
-                        <div class="project-stat-period">За все время</div>
-                    </div>
-                    <div class="project-stats-grid">
-                        <div class="stat-card"><div class="stat-value">${stats.days}</div><div class="stat-label">Отработано дней</div></div>
-                        <div class="stat-card"><div class="stat-value">${stats.hours}</div><div class="stat-label">Отработано часов</div></div>
-                        <div class="stat-card"><div class="stat-value">${Math.round(stats.earned).toLocaleString()} руб</div><div class="stat-label">Заработано</div></div>
-                        <div class="stat-card"><div class="stat-value">${stats.vacationDays + stats.sickDays}</div><div class="stat-label">Нерабочих дней</div></div>
-                    </div>
-                `;
-                projectsStatsElement.appendChild(projectStatCard);
-            }
-        }
-        
         // ==================== РЕАЛЬНОЕ ВРЕМЯ (ИСПРАВЛЕНО) ====================
         function startRealTimeUpdates() {
             if (realTimeInterval) {
@@ -2590,7 +2554,59 @@
             
             realTimeClockElement.textContent = `${hours}:${minutes}:${seconds}`;
             
+            updateRealTimeEarnings();
             updateRealTimeStatus();
+        }
+        
+        function updateRealTimeEarnings() {
+            const now = new Date();
+            const today = formatDate(now);
+            const currentProject = workData.projects[workData.currentProject];
+            const todayData = currentProject.workDays && currentProject.workDays[today];
+            
+            // Общая сумма за весь проект
+            const totalEarned = calculateProjectStats(workData.currentProject, 'all').earned;
+            
+            // Если сегодня рабочий день, считаем заработанное прямо сейчас
+            if (todayData && todayData.type === 'work' && isWorkingNow) {
+                const currentRate = getRateForDate(now, currentProject);
+                const currentHourlyRate = currentRate / 3600; // руб в секунду
+                
+                // Вычисляем сколько времени прошло с начала работы
+                const nowInMinutes = now.getHours() * 60 + now.getMinutes();
+                
+                let workedMinutesToday = 0;
+                
+                if (nowInMinutes >= timeToMinutes(workStartTime) && nowInMinutes <= timeToMinutes(workEndTime)) {
+                    if (nowInMinutes >= timeToMinutes(lunchStartTime) && nowInMinutes <= timeToMinutes(lunchEndTime)) {
+                        // Во время обеда - считаем только до обеда
+                        workedMinutesToday = timeToMinutes(lunchStartTime) - timeToMinutes(workStartTime);
+                    } else if (nowInMinutes < timeToMinutes(lunchStartTime)) {
+                        // До обеда
+                        workedMinutesToday = nowInMinutes - timeToMinutes(workStartTime);
+                    } else {
+                        // После обеда
+                        const morningWork = timeToMinutes(lunchStartTime) - timeToMinutes(workStartTime);
+                        const afternoonWork = nowInMinutes - timeToMinutes(lunchEndTime);
+                        workedMinutesToday = morningWork + afternoonWork;
+                    }
+                } else if (nowInMinutes > timeToMinutes(workEndTime)) {
+                    // После окончания рабочего дня - считаем весь день
+                    const totalWorkMinutes = (timeToMinutes(workEndTime) - timeToMinutes(workStartTime)) - 
+                                           (timeToMinutes(lunchEndTime) - timeToMinutes(lunchStartTime));
+                    workedMinutesToday = totalWorkMinutes;
+                }
+                
+                // Преобразуем минуты в секунды (добавляем текущие секунды)
+                const workedSeconds = workedMinutesToday * 60 + now.getSeconds();
+                const earnedNow = workedSeconds * currentHourlyRate;
+                
+                // Суммируем с общей суммой за проект
+                realTimeEarnedElement.textContent = `${(totalEarned + earnedNow).toFixed(2)} руб`;
+            } else {
+                // Если не рабочий день или не рабочее время - показываем только общую сумму
+                realTimeEarnedElement.textContent = `${Math.round(totalEarned).toLocaleString()} руб`;
+            }
         }
         
         function updateRealTimeStatus() {
@@ -2599,9 +2615,9 @@
             const currentProject = workData.projects[workData.currentProject];
             const todayData = currentProject.workDays && currentProject.workDays[today];
             
-            // Общая сумма за весь проект
-            const totalEarned = calculateProjectStats(workData.currentProject, 'all').earned;
-            realTimeEarnedElement.textContent = `${Math.round(totalEarned).toLocaleString()} руб`;
+            // Сбрасываем состояние
+            isWorkingNow = false;
+            timeProgressContainer.style.display = 'none';
             
             // Проверяем, сегодняшний день рабочий
             if (!todayData || todayData.type !== 'work') {
@@ -2610,37 +2626,117 @@
                 return;
             }
             
-            const workStart = parseTime(currentProject.workStartTime || '09:00');
-            const workEnd = parseTime(currentProject.workEndTime || '18:00');
-            const lunchStart = parseTime(currentProject.lunchStartTime || '13:00');
-            const lunchEnd = parseTime(currentProject.lunchEndTime || '14:00');
+            // Получаем время работы
+            workStartTime = parseTime(currentProject.workStartTime || '09:00');
+            workEndTime = parseTime(currentProject.workEndTime || '18:00');
+            lunchStartTime = parseTime(currentProject.lunchStartTime || '13:00');
+            lunchEndTime = parseTime(currentProject.lunchEndTime || '14:00');
             
             const currentHour = now.getHours();
             const currentMinute = now.getMinutes();
+            const currentSecond = now.getSeconds();
             
             const currentTimeInMinutes = currentHour * 60 + currentMinute;
-            const workStartInMinutes = workStart.hours * 60 + workStart.minutes;
-            const workEndInMinutes = workEnd.hours * 60 + workEnd.minutes;
-            const lunchStartInMinutes = lunchStart.hours * 60 + lunchStart.minutes;
-            const lunchEndInMinutes = lunchEnd.hours * 60 + lunchEnd.minutes;
+            const workStartInMinutes = timeToMinutes(workStartTime);
+            const workEndInMinutes = timeToMinutes(workEndTime);
+            const lunchStartInMinutes = timeToMinutes(lunchStartTime);
+            const lunchEndInMinutes = timeToMinutes(lunchEndTime);
+            
+            // Обновляем метки на статус-баре
+            startTimeLabel.textContent = currentProject.workStartTime || '09:00';
+            lunchTimeLabel.textContent = currentProject.lunchStartTime || '13:00';
+            endTimeLabel.textContent = currentProject.workEndTime || '18:00';
             
             let status = 'Сегодня не рабочий день';
             let widgetColor = 'linear-gradient(135deg, var(--gray), #7f8c8d)';
+            let progress = 0;
+            let nextEventTime = null;
+            let nextEventName = '';
             
             if (currentTimeInMinutes >= workStartInMinutes && currentTimeInMinutes <= workEndInMinutes) {
+                isWorkingNow = true;
+                timeProgressContainer.style.display = 'block';
+                
                 if (currentTimeInMinutes >= lunchStartInMinutes && currentTimeInMinutes <= lunchEndInMinutes) {
                     status = 'Обеденный перерыв';
                     widgetColor = 'linear-gradient(135deg, var(--warning), #e67e22)';
+                    
+                    // Прогресс до обеда
+                    const morningDuration = lunchStartInMinutes - workStartInMinutes;
+                    progress = (morningDuration / (workEndInMinutes - workStartInMinutes - (lunchEndInMinutes - lunchStartInMinutes))) * 100;
+                    
+                    // Обратный отсчет до конца обеда
+                    nextEventTime = new Date(now);
+                    nextEventTime.setHours(lunchEndTime.hours, lunchEndTime.minutes, 0, 0);
+                    nextEventName = 'конца обеда';
+                } else if (currentTimeInMinutes < lunchStartInMinutes) {
+                    status = 'Идет рабочий день';
+                    widgetColor = 'linear-gradient(135deg, var(--success), #27ae60)';
+                    
+                    // Прогресс до обеда
+                    const workedMorning = currentTimeInMinutes - workStartInMinutes;
+                    const morningDuration = lunchStartInMinutes - workStartInMinutes;
+                    progress = (workedMorning / morningDuration) * 50;
+                    
+                    // Обратный отсчет до обеда
+                    nextEventTime = new Date(now);
+                    nextEventTime.setHours(lunchStartTime.hours, lunchStartTime.minutes, 0, 0);
+                    nextEventName = 'начала обеда';
                 } else {
                     status = 'Идет рабочий день';
                     widgetColor = 'linear-gradient(135deg, var(--success), #27ae60)';
+                    
+                    // Прогресс после обеда
+                    const workedAfternoon = currentTimeInMinutes - lunchEndInMinutes;
+                    const afternoonDuration = workEndInMinutes - lunchEndInMinutes;
+                    progress = 50 + (workedAfternoon / afternoonDuration) * 50;
+                    
+                    // Обратный отсчет до конца рабочего дня
+                    nextEventTime = new Date(now);
+                    nextEventTime.setHours(workEndTime.hours, workEndTime.minutes, 0, 0);
+                    nextEventName = 'конца рабочего дня';
                 }
             } else if (currentTimeInMinutes < workStartInMinutes) {
                 status = `Рабочий день начнется в ${currentProject.workStartTime || '09:00'}`;
                 widgetColor = 'linear-gradient(135deg, var(--primary), #2980b9)';
+                
+                // Обратный отсчет до начала рабочего дня
+                nextEventTime = new Date(now);
+                nextEventTime.setHours(workStartTime.hours, workStartTime.minutes, 0, 0);
+                nextEventName = 'начала рабочего дня';
             } else if (currentTimeInMinutes > workEndInMinutes) {
                 status = 'Рабочий день окончен';
                 widgetColor = 'linear-gradient(135deg, #95a5a6, #7f8c8d)';
+                progress = 100;
+            }
+            
+            // Обновляем прогресс-бар
+            timeProgressFill.style.width = `${progress}%`;
+            progressPercentage.textContent = `${Math.round(progress)}%`;
+            
+            // Обновляем позиции маркеров
+            const totalDuration = workEndInMinutes - workStartInMinutes;
+            const lunchStartPercent = ((lunchStartInMinutes - workStartInMinutes) / totalDuration) * 100;
+            const lunchEndPercent = ((lunchEndInMinutes - workStartInMinutes) / totalDuration) * 100;
+            
+            startMarker.style.left = '0%';
+            lunchMarker.style.left = `${lunchStartPercent}%`;
+            endMarker.style.left = '100%';
+            
+            // Обновляем обратный отсчет
+            if (nextEventTime) {
+                const timeDiff = nextEventTime.getTime() - now.getTime();
+                if (timeDiff > 0) {
+                    const hours = Math.floor(timeDiff / (1000 * 60 * 60));
+                    const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
+                    const seconds = Math.floor((timeDiff % (1000 * 60)) / 1000);
+                    
+                    countdownTimer.textContent = `До ${nextEventName}: ${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                } else {
+                    countdownTimer.textContent = '';
+                }
+            } else {
+                countdownTimer.textContent = '';
             }
             
             realTimeStatusElement.textContent = status;
@@ -2665,10 +2761,10 @@
             const lunchStart = parseTime(currentProject.lunchStartTime || '13:00');
             const lunchEnd = parseTime(currentProject.lunchEndTime || '14:00');
             
-            const workStartInMinutes = workStart.hours * 60 + workStart.minutes;
-            const workEndInMinutes = workEnd.hours * 60 + workEnd.minutes;
-            const lunchStartInMinutes = lunchStart.hours * 60 + lunchStart.minutes;
-            const lunchEndInMinutes = lunchEnd.hours * 60 + lunchEnd.minutes;
+            const workStartInMinutes = timeToMinutes(workStart);
+            const workEndInMinutes = timeToMinutes(workEnd);
+            const lunchStartInMinutes = timeToMinutes(lunchStart);
+            const lunchEndInMinutes = timeToMinutes(lunchEnd);
             
             const totalWorkMinutes = (workEndInMinutes - workStartInMinutes) - 
                                    (lunchEndInMinutes - lunchStartInMinutes);
